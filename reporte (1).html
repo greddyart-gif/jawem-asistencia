@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JAWEM · Centro de Mando</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="img/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      --azul: #1F3A7A; --azul-osc: #142856; --celeste: #3FA9D9; --naranja: #F24E1E;
+      --verde: #1E9E5A; --ambar: #E8A317; --gris: #F3F5F9; --linea: #E1E6EF;
+      --texto: #1B2333; --suave: #6B7588;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Barlow', system-ui, sans-serif; background: var(--gris); color: var(--texto); }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 30px; }
+
+    header { background: #fff; border-bottom: 3px solid var(--naranja); }
+    header .wrap { display: flex; align-items: center; gap: 14px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
+    header img { height: 48px; }
+    .titulo { flex: 1; min-width: 200px; }
+    .titulo h1 { font-size: 22px; color: var(--azul); line-height: 1.1; }
+    .titulo p { font-size: 14px; color: var(--suave); }
+
+    .periodos { display: flex; gap: 6px; flex-wrap: wrap; }
+    .periodos button {
+      font-family: inherit; font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 8px;
+      border: 1.5px solid var(--linea); background: #fff; color: var(--azul); cursor: pointer;
+    }
+    .periodos button.activo { background: var(--azul); border-color: var(--azul); color: #fff; }
+
+    .sub { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 12px; flex-wrap: wrap; gap: 8px; }
+    .sub .rango { font-size: 15px; color: var(--suave); }
+    .sub .rango b { color: var(--texto); }
+    .btn-imp { font-family: inherit; font-size: 14px; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 0; background: var(--naranja); color: #fff; cursor: pointer; }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .kpi { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(20,40,86,.08); }
+    .kpi .v { font-size: 30px; font-weight: 700; color: var(--azul-osc); line-height: 1.1; }
+    .kpi .l { font-size: 13px; color: var(--suave); text-transform: uppercase; letter-spacing: .5px; }
+    .kpi.ok .v { color: var(--verde); } .kpi.warn .v { color: var(--ambar); } .kpi.mal .v { color: var(--naranja); }
+
+    .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(20,40,86,.08); margin-bottom: 16px; }
+    .card h2 { font-size: 17px; color: var(--azul); margin-bottom: 10px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--suave); font-weight: 600; padding: 6px 8px; border-bottom: 2px solid var(--linea); }
+    td { padding: 10px 8px; border-bottom: 1px solid var(--linea); }
+    th.n, td.n { text-align: center; }
+    tr:last-child td { border-bottom: 0; }
+    .nombre { font-weight: 600; }
+    .pill { display: inline-block; min-width: 52px; text-align: center; padding: 3px 8px; border-radius: 20px; font-weight: 700; font-size: 14px; color: #fff; }
+    .pill.ok { background: var(--verde); } .pill.warn { background: var(--ambar); } .pill.mal { background: var(--naranja); } .pill.na { background: #B9C1D0; }
+    .cero { color: #B9C1D0; }
+    .tabla-scroll { overflow-x: auto; }
+
+    #mapa { height: 420px; border-radius: 10px; z-index: 0; }
+    .leyenda { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 14px; color: var(--suave); }
+    .leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+    .leyenda i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .nota { font-size: 13px; color: var(--suave); margin-top: 8px; }
+
+    .hoy { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .hoy-p { border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start; }
+    .hoy-p .dot { width: 11px; height: 11px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .hoy-p b { display: block; font-size: 15px; }
+    .hoy-p span { font-size: 13px; color: var(--suave); }
+    .st-EN_SITIO .dot { background: var(--verde); } .st-SALIO .dot { background: #9AA5B8; }
+    .st-POR_LLEGAR .dot { background: var(--celeste); } .st-SIN_MARCAR .dot { background: var(--naranja); }
+    .st-LIBRE .dot { background: #DDE2EA; } .st-SIN_MARCAR { border-color: #FBD3C4; background: #FFF8F5; }
+    .wa { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: #fff; background: #25D366;
+          padding: 4px 10px; border-radius: 6px; text-decoration: none; white-space: nowrap; }
+    .motivo { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #fff; }
+    .motivo.SIN_LLEGADA { background: var(--naranja); } .motivo.SIN_SALIDA { background: var(--ambar); }
+    .horario-p { display: block; font-weight: 400; font-size: 12px; color: var(--suave); }
+    @media print { .wa { display: none; } }
+    .fin-lock { text-align: center; padding: 10px 0 4px; }
+    .fin-lock p { color: var(--suave); font-size: 14px; margin-bottom: 12px; }
+    .fin-form { display: flex; gap: 8px; max-width: 360px; margin: 0 auto; }
+    .fin-form input { flex: 1; padding: 10px 12px; border: 1.5px solid var(--linea); border-radius: 8px; font-family: inherit; font-size: 16px; }
+    .btn-azul { font-family: inherit; font-size: 15px; font-weight: 600; padding: 10px 16px; border-radius: 8px; border: 0; background: var(--azul); color: #fff; cursor: pointer; }
+    .fin-err { color: var(--naranja); font-size: 14px; margin-top: 8px; min-height: 18px; }
+    .fin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .fin-grid { grid-template-columns: 1fr; } }
+    td.m, th.m { text-align: right; white-space: nowrap; }
+    .barra { height: 8px; background: var(--linea); border-radius: 4px; overflow: hidden; margin-top: 4px; min-width: 70px; }
+    .barra i { display: block; height: 100%; background: var(--celeste); }
+    .sub-t { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--suave); margin: 4px 0 6px; font-weight: 600; }
+    tr.total td { font-weight: 700; border-top: 2px solid var(--linea); }
+    .estado { text-align: center; padding: 60px 10px; color: var(--suave); font-size: 16px; }
+    .spinner { width: 36px; height: 36px; margin: 0 auto 14px; border: 4px solid var(--linea); border-top-color: var(--azul); border-radius: 50%; animation: g .9s linear infinite; }
+    @keyframes g { to { transform: rotate(360deg); } }
+
+    footer { text-align: center; padding: 6px 0 22px; opacity: .45; font-size: 11px; color: var(--suave); display: flex; align-items: center; justify-content: center; gap: 6px; }
+    footer img { height: 18px; }
+
+    @media (max-width: 640px) {
+      .ocultar-movil { display: none; }
+      table { font-size: 14px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .periodos, .btn-imp { display: none; }
+      .card, .kpi { box-shadow: none; border: 1px solid var(--linea); }
+      .card { break-inside: avoid; }
+      .ocultar-movil { display: table-cell; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <img src="img/jawem-logo.png" alt="JAWEM">
+    <div class="titulo">
+      <h1>Centro de Mando</h1>
+      <p>Operaciones · Asistencia · Finanzas</p>
+    </div>
+    <div class="periodos" id="periodos">
+      <button data-p="semana">Esta semana</button>
+      <button data-p="mes" class="activo">Este mes</button>
+      <button data-p="mesAnt">Mes anterior</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="contenido">
+    <div class="estado"><div class="spinner"></div>Cargando información…</div>
+  </div>
+</div>
+
+<footer>
+  <img src="img/rex-dino.png" alt="">
+  <span>Desarrollado por REX Services</span>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // ================== CONFIGURACIÓN ==================
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzfHKz4TKGwtL7N1c0VhZTzqXvWKnAyVpz60nkcEpuj2im0VarUhn-JTNq03Ho7dAbBsA/exec';
+  // ===================================================
+
+  const clave = new URLSearchParams(location.search).get('k') || '';
+  const COLORES = ['#1F3A7A', '#F24E1E', '#1E9E5A', '#8E44AD', '#E8A317', '#3FA9D9', '#C0392B', '#16A085'];
+  let mapa = null;
+
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const fmt = s => {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-GT', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function rango(p) {
+    const hoy = new Date();
+    if (p === 'semana') {
+      const dow = hoy.getDay() === 0 ? 7 : hoy.getDay();
+      const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - dow + 1);
+      return { desde: iso(lunes), hasta: iso(hoy) };
+    }
+    if (p === 'mesAnt') {
+      const ini = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+      const fin = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+      return { desde: iso(ini), hasta: iso(fin) };
+    }
+    return { desde: iso(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), hasta: iso(hoy) };
+  }
+
+  const claseP = v => v === null ? 'na' : v >= 90 ? 'ok' : v >= 75 ? 'warn' : 'mal';
+  const num = (v, suf) => v ? v + (suf || '') : '<span class="cero">0</span>';
+
+  async function cargar(p) {
+    document.querySelectorAll('#periodos button').forEach(b => b.classList.toggle('activo', b.dataset.p === p));
+    const c = $('contenido');
+    c.innerHTML = '<div class="estado"><div class="spinner"></div>Cargando información…</div>';
+
+    if (API_URL.startsWith('PEGA_AQUI')) { c.innerHTML = '<div class="estado">Falta configurar API_URL.</div>'; return; }
+    if (!clave) { c.innerHTML = '<div class="estado">Enlace incompleto: falta la clave de acceso.</div>'; return; }
+
+    const r = rango(p);
+    try {
+      const url = API_URL + '?accion=reporte&k=' + encodeURIComponent(clave) + '&desde=' + r.desde + '&hasta=' + r.hasta;
+      const d = await (await fetch(url)).json();
+      if (!d.ok) { c.innerHTML = '<div class="estado">' + esc(d.error || 'No se pudo cargar el reporte.') + '</div>'; return; }
+      pintar(d);
+    } catch (e) {
+      c.innerHTML = '<div class="estado">Sin conexión. Intenta de nuevo.</div>';
+    }
+  }
+
+  function pintar(d) {
+    const k = d.kpis;
+
+    const filas = d.tecnicos.map(t => `
+      <tr>
+        <td class="nombre">${esc(t.nombre)}<span class="horario-p">${esc(t.horario || '')}</span></td>
+        <td class="n"><span class="pill ${claseP(t.puntualidad)}">${t.puntualidad === null ? '—' : t.puntualidad + '%'}</span></td>
+        <td class="n">${t.diasTrabajados}/${t.diasLaborales}</td>
+        <td class="n">${t.tardanzas ? t.tardanzas + ' <small style="color:var(--suave)">(' + t.minTarde + ' min)</small>' : num(0)}</td>
+        <td class="n">${num(t.ausencias)}</td>
+        <td class="n ocultar-movil">${t.llegadaPromedio || '—'}</td>
+        <td class="n ocultar-movil">${t.salidaPromedio || '—'}</td>
+        <td class="n ocultar-movil">${num(t.salidasAnticipadas)}</td>
+        <td class="n ocultar-movil">${t.horasSitio ? t.horasSitio + ' h' : num(0)}</td>
+      </tr>`).join('');
+
+    const wa = (tel, texto) => tel
+      ? `<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${encodeURIComponent(texto)}">WhatsApp</a>` : '';
+    const fCorta = f => { const [y, m, dd] = f.split('-'); return dd + '/' + m; };
+    const nombre1 = n => String(n).split(' ')[0];
+
+    const ESTADOS = {
+      EN_SITIO: p => `En sitio · ${esc(p.detalle)} desde ${p.hora}`,
+      SALIO: p => `Salió ${p.hora} · ${esc(p.detalle)}`,
+      POR_LLEGAR: p => `Por llegar · ${esc(p.detalle)}`,
+      SIN_MARCAR: p => `No ha marcado · ${esc(p.detalle)}`,
+      LIBRE: p => 'Día no laboral'
+    };
+    const verHoy = d.hoy && d.periodo.hasta === d.hoy.fecha;
+    const hoyHtml = verHoy ? `
+      <div class="card">
+        <h2>Hoy · ${fmt(d.hoy.fecha)}</h2>
+        <div class="hoy">${d.hoy.personas.map(p => `
+          <div class="hoy-p st-${p.estado}">
+            <i class="dot"></i>
+            <div><b>${esc(p.nombre)}</b><span>${ESTADOS[p.estado](p)}</span>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    const MOTIVO = { SIN_LLEGADA: 'No ha marcado llegada', SIN_SALIDA: 'No ha marcado salida' };
+    const pend = d.pendientes || [];
+    const pendHtml = `
+      <div class="card">
+        <h2>Pendientes de hoy</h2>
+        ${pend.length ? `<div class="tabla-scroll"><table>
+          <thead><tr><th>Persona</th><th>Motivo</th><th class="ocultar-movil">Detalle</th><th class="n">Consultar</th></tr></thead>
+          <tbody>${pend.map(x => `
+            <tr>
+              <td class="nombre">${esc(x.nombre)}</td>
+              <td><span class="motivo ${x.motivo}">${MOTIVO[x.motivo]}</span></td>
+              <td class="ocultar-movil" style="color:var(--suave);font-size:14px">${esc(x.detalle || '')}</td>
+              <td class="n">${wa(x.telefono, x.motivo === 'SIN_LLEGADA'
+                ? 'Hola ' + nombre1(x.nombre) + ', no tenemos registrada tu llegada de hoy. ¿Nos puedes indicar el motivo?'
+                : 'Hola ' + nombre1(x.nombre) + ', no tenemos registrada tu salida de hoy. ¿Ya terminaste tu jornada?')}</td>
+            </tr>`).join('')}
+          </tbody></table></div>`
+        : '<p class="cero" style="padding:6px 0">Todo en orden hoy. 👍</p>'}
+      </div>`;
+
+    const clientesHtml = d.clientes.map((cl, i) =>
+      `<span><i style="background:${COLORES[i % COLORES.length]}"></i>${esc(cl.nombre)} · ${cl.sitios} sitio${cl.sitios === 1 ? '' : 's'}</span>`
+    ).join('') + '<span><i style="background:#6B7588"></i>JAWEM (base y bodegas)</span>';
+
+    $('contenido').innerHTML = `
+      <div class="sub">
+        <div class="rango">Del <b>${fmt(d.periodo.desde)}</b> al <b>${fmt(d.periodo.hasta)}</b> · Horario ${esc(d.horario)}</div>
+        <button class="btn-imp" onclick="window.print()">Imprimir / PDF</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi ${claseP(k.puntualidad)}"><div class="v">${k.puntualidad === null ? '—' : k.puntualidad + '%'}</div><div class="l">Puntualidad</div></div>
+        <div class="kpi ${k.tardanzas ? 'warn' : ''}"><div class="v">${k.tardanzas}</div><div class="l">Tardanzas</div></div>
+        <div class="kpi ${k.ausencias ? 'mal' : ''}"><div class="v">${k.ausencias}</div><div class="l">Ausencias</div></div>
+        <div class="kpi"><div class="v">${k.horasSitio}</div><div class="l">Horas en sitio</div></div>
+        <div class="kpi"><div class="v">${k.sitiosAtendidos}</div><div class="l">Sitios atendidos</div></div>
+      </div>
+
+      ${hoyHtml}
+
+      <div class="card">
+        <h2>Asistencia por persona</h2>
+        <div class="tabla-scroll">
+          <table>
+            <thead><tr>
+              <th>Persona</th><th class="n">Puntualidad</th><th class="n">Días</th><th class="n">Tardanzas</th>
+              <th class="n">Ausencias</th><th class="n ocultar-movil">Llegada prom.</th><th class="n ocultar-movil">Salida prom.</th>
+              <th class="n ocultar-movil">Salidas antic.</th><th class="n ocultar-movil">En sitio</th>
+            </tr></thead>
+            <tbody>${filas || '<tr><td colspan="9" class="cero">Sin técnicos activos.</td></tr>'}</tbody>
+          </table>
+        </div>
+        <p class="nota">Días = días trabajados / días laborales. Tardanza: llegada después de la tolerancia de su horario. Salida prom.: hora promedio de su última salida del día.</p>
+      </div>
+
+      ${verHoy ? pendHtml : ''}
+
+      <div class="card">
+        <h2>Mapa de clientes y sitios</h2>
+        <div id="mapa"></div>
+        <div class="leyenda">${clientesHtml}</div>
+        ${d.sitiosSinCoordenadas > 0 ? `<p class="nota">${d.sitiosSinCoordenadas} sitio(s) de clientes aún sin coordenadas, no aparecen en el mapa.</p>` : ''}
+      </div>
+
+      <div class="card" id="card-fin">
+        <h2>💰 Parte financiera · Compras de proyectos</h2>
+        <div id="fin-cuerpo"></div>
+      </div>`;
+
+    pintarMapa(d);
+    abrirFinanzas();
+  }
+
+  // ---------- Parte financiera ----------
+  const Q = n => 'Q ' + Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  function abrirFinanzas() {
+    let guardada = '';
+    try { guardada = sessionStorage.getItem('jawem_fin') || ''; } catch (_) {}
+    if (guardada) return cargarFinanzas(guardada);
+    $('fin-cuerpo').innerHTML = `
+      <div class="fin-lock">
+        <p>🔒 Esta sección requiere clave.</p>
+        <button class="btn-azul" id="btn-fin-ver">Ver parte financiera</button>
+      </div>`;
+    $('btn-fin-ver').onclick = pedirClave;
+  }
+
+  function pedirClave() {
+    $('fin-cuerpo').innerHTML = `
+      <div class="fin-lock">
+        <p>Ingresa la clave de la parte financiera.</p>
+        <form class="fin-form" id="fin-form">
+          <input type="password" id="fin-clave" placeholder="Clave" autocomplete="current-password" autofocus>
+          <button class="btn-azul" type="submit">Entrar</button>
+        </form>
+        <div class="fin-err" id="fin-err"></div>
+      </div>`;
+    $('fin-form').onsubmit = e => { e.preventDefault(); const c = $('fin-clave').value.trim(); if (c) cargarFinanzas(c); };
+    setTimeout(() => $('fin-clave') && $('fin-clave').focus(), 50);
+  }
+
+  async function cargarFinanzas(clave) {
+    $('fin-cuerpo').innerHTML = '<div class="estado" style="padding:30px 0"><div class="spinner"></div>Cargando información financiera…</div>';
+    try {
+      const r = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'finanzas', clave: clave })
+      });
+      const d = await r.json();
+      if (!d.ok) {
+        try { sessionStorage.removeItem('jawem_fin'); } catch (_) {}
+        pedirClave();
+        $('fin-err').textContent = d.error || 'No se pudo cargar.';
+        return;
+      }
+      try { sessionStorage.setItem('jawem_fin', clave); } catch (_) {}
+      pintarFinanzas(d);
+    } catch (e) {
+      pedirClave();
+      $('fin-err').textContent = 'Sin conexión. Intenta de nuevo.';
+    }
+  }
+
+  function pintarFinanzas(d) {
+    const r = d.resumen;
+    const pctPag = r.comprado ? Math.round(r.pagado / r.comprado * 100) : 0;
+
+    const filasProy = d.proyectos.map(p => `
+      <tr>
+        <td><span class="nombre">${esc(p.nombre)}</span><br><small style="color:var(--suave)">${esc(p.bodega)}</small></td>
+        <td class="m">${Q(p.proyectado)}</td>
+        <td class="m">${p.cargado ? Q(p.cargado) : '<span class="cero">—</span>'}
+          <div class="barra"><i style="width:${Math.min(p.avance || 0, 100)}%"></i></div></td>
+        <td class="n">${p.avance === null ? '—' : p.avance + '%'}</td>
+      </tr>`).join('');
+
+    const filasBod = d.bodegas.map(b => `<tr><td>${esc(b.bodega)}</td><td class="m">${Q(b.comprado)}</td></tr>`).join('');
+    const totBod = d.bodegas.reduce((a, b) => a + b.comprado, 0);
+
+    const filasDeuda = d.deuda.length
+      ? d.deuda.map(x => `<tr><td>${esc(x.proveedor)}<br><small style="color:var(--suave)">${x.ocs.join(', ')}</small></td><td class="m">${Q(x.saldo)}</td></tr>`).join('')
+      : '<tr><td colspan="2" class="cero">Sin saldos pendientes.</td></tr>';
+
+    $('fin-cuerpo').innerHTML = `
+      <div class="kpis" style="margin-bottom:14px;">
+        <div class="kpi"><div class="v">${Q(r.proyectado)}</div><div class="l">Proyección de gasto</div></div>
+        <div class="kpi"><div class="v">${Q(r.comprado)}</div><div class="l">Comprado (${r.ordenes} OC)</div></div>
+        <div class="kpi ok"><div class="v">${Q(r.pagado)}</div><div class="l">Pagado · ${pctPag}%</div></div>
+        <div class="kpi ${r.saldo > 0 ? 'mal' : ''}"><div class="v">${Q(r.saldo)}</div><div class="l">Se debe</div></div>
+      </div>
+
+      <div class="sub-t">Por proyecto · proyectado vs. cargado a obra</div>
+      <div class="tabla-scroll">
+        <table>
+          <thead><tr><th>Proyecto</th><th class="m">Proyectado</th><th class="m">Cargado</th><th class="n">Avance</th></tr></thead>
+          <tbody>${filasProy}
+            <tr class="total"><td>Total</td><td class="m">${Q(r.proyectado)}</td><td class="m">${Q(r.cargado)}</td>
+              <td class="n">${r.proyectado ? Math.round(r.cargado / r.proyectado * 100) + '%' : '—'}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="fin-grid" style="margin-top:16px;">
+        <div>
+          <div class="sub-t">Comprado por bodega</div>
+          <table><tbody>${filasBod}<tr class="total"><td>Total</td><td class="m">${Q(totBod)}</td></tr></tbody></table>
+        </div>
+        <div>
+          <div class="sub-t">Saldo pendiente por proveedor</div>
+          <table><tbody>${filasDeuda}</tbody></table>
+        </div>
+      </div>
+
+      <p class="nota">Proyectado = requerimiento × último costo adjudicado. Cargado = salidas de bodega a cada proyecto, menos devoluciones.
+      Comprado y saldo según órdenes de compra vigentes (sin anuladas). Montos con IVA. Actualizado ${esc(d.actualizado)}.
+      ${d.aviso ? '<br>⚠ ' + esc(d.aviso) : ''}</p>
+      <p style="text-align:right;margin-top:6px;"><a href="#" id="fin-salir" style="color:var(--suave);font-size:13px;">Ocultar parte financiera</a></p>`;
+
+    $('fin-salir').onclick = e => {
+      e.preventDefault();
+      try { sessionStorage.removeItem('jawem_fin'); } catch (_) {}
+      abrirFinanzas();
+    };
+  }
+
+  function pintarMapa(d) {
+    if (mapa) { mapa.remove(); mapa = null; }
+    mapa = L.map('mapa', { scrollWheelZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18, attribution: '&copy; OpenStreetMap'
+    }).addTo(mapa);
+
+    const colorCliente = {};
+    d.clientes.forEach((c, i) => colorCliente[c.id] = COLORES[i % COLORES.length]);
+    const nombreCliente = {};
+    d.clientes.forEach(c => nombreCliente[c.id] = c.nombre);
+
+    const puntos = [];
+    d.sitios.forEach(s => {
+      const color = s.cliente ? (colorCliente[s.cliente] || '#6B7588') : '#6B7588';
+      const radio = 8 + Math.min(s.visitas, 20) * 0.6;
+      L.circleMarker([s.lat, s.lng], {
+        radius: radio, color: '#fff', weight: 2, fillColor: color, fillOpacity: .9
+      }).addTo(mapa).bindPopup(
+        `<b>${esc(s.nombre)}</b><br>${esc(s.cliente ? (nombreCliente[s.cliente] || s.cliente) : 'JAWEM')}` +
+        (s.tipo ? ' · ' + esc(s.tipo) : '') +
+        `<br>Visitas en el período: <b>${s.visitas}</b>`
+      );
+      puntos.push([s.lat, s.lng]);
+    });
+
+    if (puntos.length) mapa.fitBounds(puntos, { padding: [40, 40], maxZoom: 13 });
+    else mapa.setView([14.3, -89.8], 9);
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  document.querySelectorAll('#periodos button').forEach(b => b.addEventListener('click', () => cargar(b.dataset.p)));
+  cargar('mes');
+</script>
+</body>
+</html>
