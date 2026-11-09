@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JAWEM · Reporte de generación solar</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="img/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul: #1F3A7A; --azul-osc: #142856; --celeste: #3FA9D9; --naranja: #F24E1E;
+      --verde: #1E9E5A; --ambar: #E8A317; --gris: #F3F5F9; --linea: #E1E6EF;
+      --texto: #1B2333; --suave: #6B7588;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Barlow', system-ui, sans-serif; background: var(--gris); color: var(--texto); }
+
+    /* ---------- Controles (no se imprimen) ---------- */
+    .controles { background: #fff; border-bottom: 3px solid var(--naranja); padding: 14px 16px; }
+    .controles .fila { max-width: 900px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+    .controles label { display: block; font-size: 12px; font-weight: 600; color: var(--suave); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
+    .controles select, .controles input { padding: 9px 10px; border: 1.5px solid var(--linea); border-radius: 8px; font-family: inherit; font-size: 15px; background: #fff; }
+    .controles .campo { flex: 1; min-width: 140px; }
+    .controles .campo select, .controles .campo input { width: 100%; }
+    .rapidos { display: flex; gap: 6px; }
+    .btn { font-family: inherit; font-size: 15px; font-weight: 600; padding: 10px 14px; border-radius: 8px; border: 0; cursor: pointer; }
+    .btn.azul { background: var(--azul); color: #fff; }
+    .btn.naranja { background: var(--naranja); color: #fff; }
+    .btn.sec { background: var(--gris); color: var(--azul); border: 1.5px solid var(--linea); padding: 8px 10px; font-size: 13px; }
+    .estado { text-align: center; padding: 50px 10px; color: var(--suave); }
+    .spinner { width: 34px; height: 34px; margin: 0 auto 12px; border: 4px solid var(--linea); border-top-color: var(--azul); border-radius: 50%; animation: g .9s linear infinite; }
+    @keyframes g { to { transform: rotate(360deg); } }
+
+    /* ---------- Documento ---------- */
+    .doc { max-width: 900px; margin: 20px auto; background: #fff; padding: 34px 38px; box-shadow: 0 2px 10px rgba(20,40,86,.08); }
+    .enc { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 3px solid var(--naranja); padding-bottom: 16px; }
+    .enc img { height: 70px; }
+    .enc .der { text-align: right; }
+    .enc h1 { font-size: 24px; color: var(--azul); line-height: 1.1; }
+    .enc .meta { font-size: 13px; color: var(--suave); margin-top: 6px; line-height: 1.5; }
+    .enc .meta b { color: var(--texto); }
+
+    h2 { font-size: 18px; color: var(--azul); margin: 26px 0 10px; }
+    h3 { font-size: 14px; color: var(--azul-osc); margin: 16px 0 6px; text-transform: uppercase; letter-spacing: .5px; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0 6px; }
+    .kpi { border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; }
+    .kpi .v { font-size: 22px; font-weight: 700; color: var(--azul-osc); }
+    .kpi .l { font-size: 11px; color: var(--suave); text-transform: uppercase; letter-spacing: .4px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: var(--azul); color: #fff; font-weight: 600; padding: 6px 6px; font-size: 12px; text-align: center; }
+    th:first-child { text-align: left; }
+    td { padding: 5px 6px; border-bottom: 1px solid var(--linea); text-align: right; font-variant-numeric: tabular-nums; }
+    td:first-child { text-align: left; white-space: nowrap; }
+    tr:nth-child(even) td { background: #F8F9FC; }
+    tr.total td { font-weight: 700; background: #EAF0FA !important; border-top: 2px solid var(--azul); }
+    td.tot { font-weight: 700; color: var(--azul-osc); }
+    .nl { color: #B9C1D0; font-size: 11px; }
+    .vacio { color: #D0D5DF; }
+
+    .lugar { break-inside: avoid-page; }
+    .lugar + .lugar { margin-top: 10px; }
+    .lugar-enc { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--linea); margin-top: 28px; padding-bottom: 4px; }
+    .lugar-enc h2 { margin: 0; }
+    .lugar-enc span { font-size: 13px; color: var(--suave); }
+    .grafica { margin: 10px 0 4px; }
+    .area { break-inside: avoid; }
+
+    .nota { font-size: 11px; color: var(--suave); margin-top: 18px; line-height: 1.5; }
+    .pie { display: flex; justify-content: space-between; align-items: center; margin-top: 26px; padding-top: 10px; border-top: 1px solid var(--linea); font-size: 11px; color: var(--suave); }
+    .pie .rex { display: flex; align-items: center; gap: 5px; opacity: .5; }
+    .pie .rex img { height: 15px; }
+
+    @media (max-width: 640px) {
+      .doc { padding: 20px 14px; margin: 0; }
+      .enc { flex-direction: column; } .enc .der { text-align: left; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .tabla-scroll { overflow-x: auto; }
+    }
+    @page { size: letter; margin: 12mm; }
+    @media print {
+      body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .controles { display: none; }
+      .doc { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+      .lugar { break-inside: auto; } .area, .lugar-enc, .grafica { break-inside: avoid; } .lugar-enc { break-after: avoid; }
+      table { font-size: 11px; }
+      th { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="controles">
+  <div class="fila">
+    <div class="campo"><label for="f-cliente">Cliente</label><select id="f-cliente"></select></div>
+    <div class="campo"><label for="f-sitio">Lugar</label><select id="f-sitio"><option value="">Todos</option></select></div>
+    <div class="campo"><label for="f-desde">Desde</label><input type="date" id="f-desde"></div>
+    <div class="campo"><label for="f-hasta">Hasta</label><input type="date" id="f-hasta"></div>
+  </div>
+  <div class="fila" style="margin-top:10px;">
+    <div class="rapidos">
+      <button class="btn sec" data-r="semana">Esta semana</button>
+      <button class="btn sec" data-r="mes">Este mes</button>
+      <button class="btn sec" data-r="mesAnt">Mes anterior</button>
+    </div>
+    <div style="flex:1"></div>
+    <button class="btn azul" id="btn-generar">Generar</button>
+    <button class="btn naranja" onclick="window.print()">Imprimir / PDF</button>
+  </div>
+</div>
+
+<div id="contenido"><div class="estado"><div class="spinner"></div>Cargando…</div></div>
+
+<script>
+  // ================== CONFIGURACIÓN ==================
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzfHKz4TKGwtL7N1c0VhZTzqXvWKnAyVpz60nkcEpuj2im0VarUhn-JTNq03Ho7dAbBsA/exec';
+  // ===================================================
+
+  const clave = new URLSearchParams(location.search).get('k') || '';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const num = (n, dec = 1) => Number(n).toLocaleString('es-GT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const fLarga = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('es-GT', { day: 'numeric', month: 'long', year: 'numeric' }); };
+  const fCorta = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('es-GT', { weekday: 'short', day: '2-digit', month: '2-digit' }); };
+  let primeraCarga = true;
+
+  function rango(r) {
+    const hoy = new Date();
+    if (r === 'semana') { const dow = hoy.getDay() || 7; const l = new Date(hoy); l.setDate(hoy.getDate() - dow + 1); return [iso(l), iso(hoy)]; }
+    if (r === 'mesAnt') return [iso(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)), iso(new Date(hoy.getFullYear(), hoy.getMonth(), 0))];
+    return [iso(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), iso(hoy)];
+  }
+  document.querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => {
+    const [d, h] = rango(b.dataset.r); $('f-desde').value = d; $('f-hasta').value = h; generar();
+  }));
+  $('btn-generar').addEventListener('click', generar);
+  $('f-cliente').addEventListener('change', () => { $('f-sitio').value = ''; generar(); });
+  $('f-sitio').addEventListener('change', generar);
+
+  async function generar() {
+    const c = $('contenido');
+    if (API_URL.startsWith('PEGA_AQUI')) { c.innerHTML = '<div class="estado">Falta configurar API_URL.</div>'; return; }
+    if (!clave) { c.innerHTML = '<div class="estado">Enlace incompleto: falta la clave de acceso.</div>'; return; }
+    if (!$('f-desde').value || !$('f-hasta').value) { const [d, h] = rango('mes'); $('f-desde').value = d; $('f-hasta').value = h; }
+    c.innerHTML = '<div class="estado"><div class="spinner"></div>Generando reporte…</div>';
+    const q = new URLSearchParams({ accion: 'generacion', k: clave, desde: $('f-desde').value, hasta: $('f-hasta').value,
+                                    cliente: $('f-cliente').value || '', sitio: $('f-sitio').value || '' });
+    try {
+      const d = await (await fetch(API_URL + '?' + q.toString())).json();
+      if (!d.ok) { c.innerHTML = '<div class="estado">' + esc(d.error || 'No se pudo generar.') + '</div>'; return; }
+      llenarFiltros(d);
+      if (primeraCarga && !$('f-cliente').value && d.clientes.length) {
+        // Primera vez: elegir el primer cliente y volver a generar solo con sus lugares
+        primeraCarga = false;
+        $('f-cliente').value = d.clientes[0].id;
+        return generar();
+      }
+      primeraCarga = false;
+      pintar(d);
+    } catch (e) {
+      c.innerHTML = '<div class="estado">Sin conexión. Intenta de nuevo.</div>';
+    }
+  }
+
+  function llenarFiltros(d) {
+    const cSel = $('f-cliente'), cVal = cSel.value;
+    if (!cSel.options.length) {
+      cSel.innerHTML = d.clientes.map(c => `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+      cSel.value = cVal;
+    }
+    const sSel = $('f-sitio'), sVal = sSel.value;
+    const disp = d.sitiosDisponibles.filter(s => (s.clienteId || '') === (cSel.value || ''));
+    sSel.innerHTML = '<option value="">Todos</option>' + disp.map(s => `<option value="${esc(s.id)}">${esc(s.nombre)}</option>`).join('');
+    if (disp.some(s => s.id === sVal)) sSel.value = sVal;
+  }
+
+  function diasEntre(desde, hasta) {
+    const out = []; const d = new Date(desde + 'T12:00:00');
+    while (iso(d) <= hasta && out.length < 93) { out.push(iso(d)); d.setDate(d.getDate() + 1); }
+    return out;
+  }
+
+  function grafica(dias, totales) {
+    const W = 820, H = 150, pad = { l: 46, r: 8, t: 10, b: 22 };
+    const max = Math.max(1, ...totales.filter(x => x !== null));
+    const tope = Math.ceil(max / Math.pow(10, Math.floor(Math.log10(max)))) * Math.pow(10, Math.floor(Math.log10(max)));
+    const bw = (W - pad.l - pad.r) / dias.length;
+    let g = '';
+    [0, .5, 1].forEach(f => {
+      const y = pad.t + (H - pad.t - pad.b) * (1 - f);
+      g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y}" y2="${y}" stroke="#E1E6EF"/>` +
+           `<text x="${pad.l - 6}" y="${y + 4}" font-size="10" fill="#6B7588" text-anchor="end">${num(tope * f, 0)}</text>`;
+    });
+    dias.forEach((d, i) => {
+      const v = totales[i];
+      const x = pad.l + i * bw;
+      if (v !== null) {
+        const h = (H - pad.t - pad.b) * v / tope;
+        g += `<rect x="${x + bw * 0.15}" y="${H - pad.b - h}" width="${bw * 0.7}" height="${h}" rx="2" fill="#3FA9D9"><title>${d}: ${num(v)} kWh</title></rect>`;
+      }
+      const paso = dias.length > 16 ? Math.ceil(dias.length / 16) : 1;
+      if (i % paso === 0) g += `<text x="${x + bw / 2}" y="${H - 6}" font-size="10" fill="#6B7588" text-anchor="middle">${d.slice(8)}</text>`;
+    });
+    return `<svg class="grafica" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="kWh por día">${g}</svg>`;
+  }
+
+  function pintar(d) {
+    const dias = diasEntre(d.desde, d.hasta);
+    const cliente = ($('f-cliente').selectedOptions[0] || {}).text || '';
+    let totalGeneral = 0;
+
+    const lugares = d.lugares.map(L => {
+      const invs = L.areas.flatMap(a => a.inversores);
+      const totDia = dias.map(dd => {
+        let s = 0, hay = false;
+        invs.forEach(i => { const v = (L.valores[i.id] || {})[dd]; if (typeof v === 'number') { s += v; hay = true; } });
+        return hay ? s : null;
+      });
+      const total = totDia.reduce((a, x) => a + (x || 0), 0);
+      const diasLeidos = totDia.filter(x => x !== null).length;
+      let nl = 0;
+      invs.forEach(i => Object.values(L.valores[i.id] || {}).forEach(v => { if (v === 'NL') nl++; }));
+      totalGeneral += total;
+      return Object.assign({}, L, { invs, totDia, total, diasLeidos, nl, prom: diasLeidos ? total / diasLeidos : 0 });
+    });
+
+    const resumen = lugares.map(L => `
+      <tr><td>${esc(L.nombre)}</td><td>${L.invs.length}</td><td class="tot">${num(L.total)}</td>
+      <td>${L.diasLeidos ? num(L.prom) : '—'}</td><td>${L.diasLeidos} / ${dias.length}</td></tr>`).join('');
+
+    const detalle = lugares.map((L, li) => {
+      const areas = L.areas.map(A => {
+        const cols = A.inversores;
+        const filas = dias.map((dd, di) => {
+          let s = 0, hay = false;
+          const celdas = cols.map(i => {
+            const v = (L.valores[i.id] || {})[dd];
+            if (v === 'NL') return '<td class="nl">N/L</td>';
+            if (typeof v === 'number') { s += v; hay = true; return `<td>${num(v)}</td>`; }
+            return '<td class="vacio">—</td>';
+          }).join('');
+          return hay || cols.some(i => (L.valores[i.id] || {})[dd] !== undefined)
+            ? `<tr><td>${fCorta(dd)}</td>${celdas}${cols.length > 1 ? `<td class="tot">${hay ? num(s) : '—'}</td>` : ''}</tr>` : '';
+        }).join('');
+        if (!filas) return '';
+        const totCol = cols.map(i => Object.values(L.valores[i.id] || {}).reduce((a, v) => a + (typeof v === 'number' ? v : 0), 0));
+        return `
+          <div class="area">
+            ${A.area ? `<h3>${esc(A.area)}</h3>` : ''}
+            <div class="tabla-scroll"><table>
+              <thead><tr><th>Fecha</th>${cols.map(i => `<th>Inv. #${i.numero}</th>`).join('')}${cols.length > 1 ? '<th>Total</th>' : ''}</tr></thead>
+              <tbody>${filas}
+                <tr class="total"><td>Total</td>${totCol.map(t => `<td>${num(t)}</td>`).join('')}${cols.length > 1 ? `<td>${num(totCol.reduce((a, b) => a + b, 0))}</td>` : ''}</tr>
+              </tbody>
+            </table></div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="lugar ${li > 0 ? 'nueva-pagina' : ''}">
+          <div class="lugar-enc"><h2>${esc(L.nombre)}</h2><span>${L.invs.length} inversor${L.invs.length === 1 ? '' : 'es'} · Total ${num(L.total)} kWh</span></div>
+          ${L.diasLeidos ? grafica(dias, L.totDia) : ''}
+          ${areas || '<p class="nota">Sin lecturas en el período.</p>'}
+        </div>`;
+    }).join('');
+
+    const nlTotal = lugares.reduce((a, L) => a + L.nl, 0);
+
+    $('contenido').innerHTML = `
+      <div class="doc">
+        <div class="enc">
+          <img src="img/jawem-logo.png" alt="JAWEM">
+          <div class="der">
+            <h1>Reporte de Generación Solar</h1>
+            <div class="meta">
+              Cliente: <b>${esc(cliente)}</b><br>
+              Período: <b>${fLarga(d.desde)} al ${fLarga(d.hasta)}</b><br>
+              Emitido: ${esc(d.emitido)}
+            </div>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="v">${num(totalGeneral, 0)}</div><div class="l">kWh generados</div></div>
+          <div class="kpi"><div class="v">${lugares.length}</div><div class="l">Lugares</div></div>
+          <div class="kpi"><div class="v">${lugares.reduce((a, L) => a + L.invs.length, 0)}</div><div class="l">Inversores</div></div>
+          <div class="kpi"><div class="v">${dias.length}</div><div class="l">Días del período</div></div>
+        </div>
+
+        <h2>Resumen por lugar</h2>
+        <div class="tabla-scroll"><table>
+          <thead><tr><th>Lugar</th><th>Inversores</th><th>Total kWh</th><th>Promedio diario</th><th>Días con lectura</th></tr></thead>
+          <tbody>${resumen}
+            <tr class="total"><td>Total</td><td>${lugares.reduce((a, L) => a + L.invs.length, 0)}</td><td>${num(totalGeneral)}</td><td></td><td></td></tr>
+          </tbody>
+        </table></div>
+
+        ${detalle}
+
+        <p class="nota">Valores en kWh generados por día, según la lectura de cada inversor.
+          “N/L” = inversor no leído ese día${nlTotal ? ' (' + nlTotal + ' en el período)' : ''}. “—” = sin registro.</p>
+
+        <div class="pie">
+          <span>JAWEM Consultores Energéticos S.A.</span>
+          <span class="rex"><img src="img/rex-dino.png" alt="">Desarrollado por REX Services</span>
+        </div>
+      </div>`;
+  }
+
+  const [d0, h0] = rango('mes'); $('f-desde').value = d0; $('f-hasta').value = h0;
+  generar();
+</script>
+</body>
+</html>
