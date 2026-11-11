@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>JAWEM · Asistencia</title>
+  <meta name="theme-color" content="#1F3A7A">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="img/icon-192.png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul: #1F3A7A;
+      --azul-osc: #142856;
+      --celeste: #3FA9D9;
+      --naranja: #F24E1E;
+      --verde: #1E9E5A;
+      --gris: #F3F5F9;
+      --linea: #E1E6EF;
+      --texto: #1B2333;
+      --suave: #6B7588;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Barlow', system-ui, sans-serif;
+      background: var(--gris);
+      color: var(--texto);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #fff;
+      border-bottom: 3px solid var(--naranja);
+      padding: 12px 18px;
+      padding-top: calc(12px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header img { width: 40px; height: 40px; }
+    header .t1 { font-weight: 700; font-size: 20px; color: var(--azul); letter-spacing: .5px; line-height: 1; }
+    header .t2 { font-size: 13px; color: var(--suave); }
+
+    main { flex: 1; width: 100%; max-width: 480px; margin: 0 auto; padding: 18px 16px 24px; }
+    .vista { display: none; }
+    .vista.activa { display: block; }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(20, 40, 86, .08);
+    }
+    .saludo { font-size: 15px; color: var(--suave); }
+    .nombre { font-size: 22px; font-weight: 700; color: var(--azul); }
+    .reloj { font-size: 44px; font-weight: 700; color: var(--azul-osc); letter-spacing: 1px; line-height: 1.1; margin-top: 8px; }
+    .fecha { font-size: 15px; color: var(--suave); }
+
+    .fila { display: flex; align-items: center; gap: 10px; }
+    .punto { width: 12px; height: 12px; border-radius: 50%; background: #B9C1D0; flex-shrink: 0; }
+    .punto.ok { background: var(--verde); }
+    .punto.warn { background: #E8A317; }
+    .punto.mal { background: var(--naranja); }
+    .etq { font-size: 13px; color: var(--suave); text-transform: uppercase; letter-spacing: .6px; }
+    .sitio { font-size: 20px; font-weight: 600; margin-top: 4px; }
+    .detalle { font-size: 14px; color: var(--suave); margin-top: 2px; }
+
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 20px;
+      font-family: inherit;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+      background: var(--azul);
+      cursor: pointer;
+      transition: transform .08s, opacity .2s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .4; }
+    .btn.salida { background: var(--naranja); }
+    .btn.sec {
+      background: transparent;
+      color: var(--azul);
+      border: 2px solid var(--azul);
+      font-size: 16px;
+      padding: 12px;
+    }
+    .pasos { margin-top: 12px; background: #FFF4EF; border: 1px solid #FBD3C4; border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.45; }
+    .pasos b.t { display: block; color: var(--naranja); margin-bottom: 6px; }
+    .pasos ol { padding-left: 18px; }
+    .pasos li { margin-bottom: 4px; }
+    .ayuda { font-size: 13px; color: var(--suave); text-align: center; margin-top: 8px; min-height: 18px; }
+
+    .marcas { list-style: none; }
+    .marcas li { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--linea); font-size: 15px; }
+    .marcas li:last-child { border-bottom: 0; }
+    .tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #fff; margin-right: 8px; }
+    .tag.LLEGADA { background: var(--azul); }
+    .tag.SALIDA { background: var(--naranja); }
+    .vacio { color: var(--suave); font-size: 14px; }
+
+    label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+    select, input {
+      width: 100%;
+      padding: 14px;
+      border: 1.5px solid var(--linea);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 18px;
+      background: #fff;
+    }
+    input.pin { letter-spacing: 10px; text-align: center; font-size: 26px; }
+    h2 { font-size: 20px; color: var(--azul); margin-bottom: 6px; }
+    p.txt { font-size: 15px; color: var(--suave); line-height: 1.4; }
+
+    .centro { text-align: center; padding: 40px 10px; }
+    .spinner {
+      width: 38px; height: 38px; margin: 0 auto 14px;
+      border: 4px solid var(--linea); border-top-color: var(--azul);
+      border-radius: 50%; animation: gira 0.9s linear infinite;
+    }
+    @keyframes gira { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed; left: 16px; right: 16px; bottom: calc(70px + env(safe-area-inset-bottom));
+      max-width: 448px; margin: 0 auto;
+      padding: 14px 16px; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 500;
+      background: var(--verde); box-shadow: 0 6px 20px rgba(0,0,0,.18);
+      transform: translateY(20px); opacity: 0; pointer-events: none; transition: all .25s;
+    }
+    .toast.ver { transform: translateY(0); opacity: 1; }
+    .toast.error { background: var(--naranja); }
+
+    footer {
+      text-align: center;
+      padding: 10px 0 calc(12px + env(safe-area-inset-bottom));
+      opacity: .45;
+      font-size: 11px;
+      color: var(--suave);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    footer img { height: 18px; }
+
+    /* ---------- Pestañas ---------- */
+    .tabs { display: flex; gap: 6px; background: #fff; padding: 5px; border-radius: 12px; margin-bottom: 14px;
+            box-shadow: 0 1px 3px rgba(20,40,86,.08); }
+    .tabs button { flex: 1; border: 0; background: transparent; font-family: inherit; font-size: 16px; font-weight: 600;
+                   color: var(--suave); padding: 11px 6px; border-radius: 9px; cursor: pointer; position: relative; }
+    .tabs button.activa { background: var(--azul); color: #fff; }
+    .tabs .badge { position: absolute; top: 4px; right: 8px; background: var(--naranja); color: #fff; font-size: 11px;
+                   border-radius: 10px; padding: 1px 6px; display: none; }
+    .tab { display: none; } .tab.activa { display: block; }
+    /* ---------- Ausencias ---------- */
+    .aus-cab { display: flex; justify-content: space-between; align-items: center; }
+    .aus-cab button { border: 0; background: none; color: var(--azul); font-weight: 700; font-size: 14px; padding: 6px 0; }
+    .aus-item { border-top: 1px solid var(--linea); padding: 10px 0; font-size: 14px; }
+    .aus-item:first-child { border-top: 0; }
+    .aus-item .f1 { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .aus-item .tipo { font-weight: 700; color: var(--texto); }
+    .aus-item .fechas { color: var(--suave); font-size: 13px; margin-top: 2px; }
+    .aus-item .resp { margin-top: 4px; font-size: 13px; color: var(--azul); }
+    .aus-item a { color: var(--naranja); font-size: 13px; }
+    .est { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; color: #fff; white-space: nowrap; }
+    .est.APROBADA { background: var(--verde); }
+    .est.PENDIENTE { background: #E0A100; }
+    .est.RECHAZADA { background: var(--naranja); }
+    .est.CANCELADA { background: #9AA3B2; }
+    .aus-form textarea { width: 100%; min-height: 70px; font: inherit; font-size: 15px; padding: 10px;
+      border: 1.5px solid var(--linea); border-radius: 10px; }
+    .aus-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .aus-nota { font-size: 12px; color: var(--suave); margin-top: 4px; }
+    .btn-wa2 { display: block; text-align: center; margin-top: 10px; padding: 12px; border-radius: 12px;
+      background: #25D366; color: #fff; font-weight: 700; text-decoration: none; }
+    .offline { background: #FFF4E0; border: 1px solid #F3D49B; color: #8A5A00; border-radius: 10px; padding: 10px 12px;
+               font-size: 14px; margin-bottom: 12px; display: none; }
+    .cola { background: #EAF5FC; border: 1px solid #BFE0F2; color: var(--azul); border-radius: 10px; padding: 10px 12px;
+            font-size: 14px; margin-bottom: 12px; display: none; align-items: center; justify-content: space-between; gap: 8px; }
+    .cola button { border: 0; background: var(--azul); color: #fff; font-family: inherit; font-weight: 600; border-radius: 8px; padding: 7px 10px; }
+    textarea { width: 100%; padding: 12px; border: 1.5px solid var(--linea); border-radius: 10px; font-family: inherit;
+               font-size: 16px; min-height: 110px; resize: vertical; }
+    .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fila2 > div { min-width: 0; }
+    .hora-wrap { position: relative; }
+    .hora-wrap input { padding-right: 64px; min-width: 0; font-size: 16px; }
+    .ahora { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: var(--gris);
+             color: var(--azul); font-family: inherit; font-size: 12px; font-weight: 700; padding: 5px 7px; border-radius: 6px; }
+    .duracion { font-size: 14px; color: var(--suave); margin-top: 6px; min-height: 18px; }
+    .seg { display: flex; gap: 8px; }
+    .seg label { flex: 1; margin: 0; }
+    .seg input { display: none; }
+    .seg span { display: block; text-align: center; padding: 12px 6px; border: 1.5px solid var(--linea); border-radius: 10px;
+                font-weight: 600; font-size: 15px; color: var(--suave); cursor: pointer; }
+    .seg input:checked + span { border-color: var(--azul); background: var(--azul); color: #fff; }
+    .seg input.pend:checked + span { border-color: var(--naranja); background: var(--naranja); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chips label { margin: 0; font-weight: 500; }
+    .chips input { display: none; }
+    .chips span { display: inline-block; padding: 8px 12px; border: 1.5px solid var(--linea); border-radius: 20px; font-size: 14px; cursor: pointer; }
+    .chips input:checked + span { background: var(--celeste); border-color: var(--celeste); color: #fff; }
+    .opcional { font-weight: 400; color: var(--suave); font-size: 13px; }
+    .ots { list-style: none; }
+    .ots li { padding: 10px 0; border-bottom: 1px solid var(--linea); font-size: 15px; }
+    .ots li:last-child { border-bottom: 0; }
+    .ots .t { display: flex; justify-content: space-between; gap: 8px; }
+    .ots small { color: var(--suave); }
+    .res { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; color: #fff; background: var(--verde); }
+    .res.PENDIENTE { background: var(--naranja); } .res.COLA { background: #9AA5B8; }
+
+    /* ---------- Lecturas ---------- */
+    .tabs button { font-size: 14px; padding: 11px 4px; }
+    .lec-aviso { border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 12px; display: none; }
+    .lec-aviso.ya { display: block; background: #EAF7EF; border: 1px solid #BFE5CC; color: #17673F; }
+    .lec-aviso.nueva { display: block; background: var(--gris); border: 1px solid var(--linea); color: var(--suave); }
+    .lec-aviso.sin { display: block; background: #FFF4E0; border: 1px solid #F3D49B; color: #8A5A00; }
+    .lec-area { font-size: 13px; font-weight: 700; color: var(--azul); text-transform: uppercase; letter-spacing: .5px;
+                margin: 16px 0 4px; padding-bottom: 4px; border-bottom: 2px solid var(--linea); }
+    .lec-fila { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; padding: 8px 0;
+                border-bottom: 1px solid var(--linea); }
+    .lec-n { font-weight: 700; font-size: 17px; color: var(--azul-osc); }
+    .lec-fila input[type=number] { padding: 10px 12px; font-size: 18px; }
+    .lec-fila .prom { font-size: 12px; color: var(--suave); margin-top: 3px; }
+    .lec-fila .prom.warn { color: var(--naranja); font-weight: 600; }
+    .lec-nl { font-size: 13px; color: var(--suave); display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 0; font-weight: 500; }
+    .lec-nl input { width: 22px; height: 22px; }
+    .lec-fila.nl input[type=number] { background: var(--gris); color: #B9C1D0; }
+    .lec-motivo { grid-column: 2 / 4; display: none; }
+    .lec-fila.nl .lec-motivo { display: block; }
+    .lec-motivo select { padding: 9px 10px; font-size: 15px; }
+    .lec-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; padding-top: 10px; border-top: 2px solid var(--linea); }
+    .lec-total b { font-size: 24px; color: var(--azul-osc); }
+    .lec-total span { font-size: 13px; color: var(--suave); }
+
+    /* ---------- Resumen en campo ---------- */
+    .btn-res { width: 100%; margin-top: 12px; font-family: inherit; font-size: 15px; font-weight: 600; padding: 11px; border-radius: 10px;
+               border: 1.5px solid var(--celeste); background: #EAF5FC; color: var(--azul); cursor: pointer; }
+    .res-chips { display: flex; gap: 6px; margin: 4px 0 12px; flex-wrap: wrap; }
+    .res-chips button { flex: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 6px; border-radius: 8px;
+                        border: 1.5px solid var(--linea); background: #fff; color: var(--suave); }
+    .res-chips button.activa { background: var(--azul); border-color: var(--azul); color: #fff; }
+    .res-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .res-kpis div { background: var(--gris); border-radius: 10px; padding: 10px 12px; }
+    .res-kpis b { display: block; font-size: 22px; color: var(--azul-osc); }
+    .res-kpis span { font-size: 12px; color: var(--suave); text-transform: uppercase; letter-spacing: .4px; }
+    .res-tabla { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; }
+    .res-tabla th { text-align: left; font-size: 11px; color: var(--suave); text-transform: uppercase; padding: 5px 4px; border-bottom: 2px solid var(--linea); }
+    .res-tabla td { padding: 7px 4px; border-bottom: 1px solid var(--linea); }
+    .res-tabla td.n, .res-tabla th.n { text-align: right; }
+    .btn-wa { width: 100%; margin-top: 12px; border: 0; border-radius: 10px; padding: 13px; font-family: inherit; font-size: 16px;
+              font-weight: 700; background: #25D366; color: #fff; }
+
+    /* ---------- OT abiertas ---------- */
+    .abiertas { background: #FFF6F2; border: 2px solid var(--naranja); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+    .abiertas h2 { color: var(--naranja); font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+    .abiertas h2 span { background: var(--naranja); color: #fff; font-size: 13px; border-radius: 12px; padding: 2px 9px; }
+    .ab-item { background: #fff; border-radius: 10px; padding: 10px 12px; margin-top: 10px; border: 1px solid #F6D2C4; }
+    .ab-item .t { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+    .ab-item small { display: block; color: var(--suave); font-size: 13px; margin-top: 2px; }
+    .ab-item .ult { font-size: 13px; color: var(--texto); margin-top: 6px; background: var(--gris); border-radius: 6px; padding: 6px 8px; }
+    .ab-item button { margin-top: 8px; width: 100%; border: 0; border-radius: 8px; padding: 10px; font-family: inherit;
+                      font-size: 15px; font-weight: 700; background: var(--naranja); color: #fff; }
+    .dias-ab { font-weight: 700; color: var(--naranja); white-space: nowrap; }
+    .continuando { background: #FFF6F2; border: 1.5px solid var(--naranja); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 6px; }
+    .continuando b { color: var(--naranja); }
+    .continuando a { color: var(--suave); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="img/icon-192.png" alt="JAWEM">
+  <div>
+    <div class="t1">JAWEM</div>
+    <div class="t2">Asistencia y reportes de trabajo</div>
+  </div>
+</header>
+
+<main>
+  <!-- Cargando -->
+  <section id="v-cargando" class="vista activa">
+    <div class="centro">
+      <div class="spinner"></div>
+      <p class="txt" id="txt-cargando">Conectando…</p>
+    </div>
+  </section>
+
+  <!-- Activación del celular -->
+  <section id="v-activar" class="vista">
+    <div class="card">
+      <h2>Registrar este celular</h2>
+      <p class="txt">Solo se hace una vez. Elige tu nombre y escribe el PIN que te dio la base.</p>
+      <label for="sel-tecnico">Técnico</label>
+      <select id="sel-tecnico"></select>
+      <label for="inp-pin">PIN de activación</label>
+      <input id="inp-pin" class="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••">
+    </div>
+    <button class="btn" id="btn-activar">ACTIVAR</button>
+    <p class="ayuda" id="ayuda-activar"></p>
+  </section>
+
+  <!-- Pendiente / bloqueado -->
+  <section id="v-pendiente" class="vista">
+    <div class="card centro">
+      <h2 id="pend-titulo">Celular pendiente de aprobación</h2>
+      <p class="txt" id="pend-texto">Este celular quedó registrado. La base de mandos debe aprobarlo antes de que puedas marcar.</p>
+      <p class="txt" style="margin-top:14px;">Código del celular: <b id="pend-codigo"></b></p>
+    </div>
+    <button class="btn sec" id="btn-reintentar">Volver a revisar</button>
+    <p class="ayuda"><a href="#" id="lnk-reactivar" style="color:var(--azul)">Registrar de nuevo</a></p>
+  </section>
+
+  <!-- Principal -->
+  <section id="v-principal" class="vista">
+    <div class="card">
+      <div class="saludo">Hola,</div>
+      <div class="nombre" id="lbl-nombre"></div>
+      <div class="reloj" id="lbl-reloj">--:--</div>
+      <div class="fecha" id="lbl-fecha"></div>
+    </div>
+
+    <div class="offline" id="box-offline">📵 Sin conexión. Puedes llenar reportes de trabajo; se enviarán cuando haya señal. Para marcar asistencia necesitas internet.</div>
+
+    <div class="tabs">
+      <button id="tb-asis" class="activa">🕒 Asistencia</button>
+      <button id="tb-ot">🛠 Reporte<span class="badge" id="badge-cola"></span></button>
+      <button id="tb-lec">⚡ Lecturas<span class="badge" id="badge-lcola"></span></button>
+    </div>
+
+    <div class="tab activa" id="tab-asis">
+    <div class="card">
+      <div class="fila">
+        <span class="punto" id="pt-gps"></span>
+        <span class="etq" id="lbl-gps">Buscando señal GPS…</span>
+      </div>
+      <div class="sitio" id="lbl-sitio">—</div>
+      <div class="detalle" id="lbl-distancia"></div>
+      <button class="btn sec" id="btn-gps" style="display:none;margin-top:12px;">📍 ACTIVAR UBICACIÓN</button>
+      <div class="pasos" id="box-pasos" style="display:none;"></div>
+    </div>
+
+    <button class="btn" id="btn-marcar" disabled>MARCAR LLEGADA</button>
+    <p class="ayuda" id="ayuda-marcar"></p>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="etq" style="margin-bottom:6px;">Marcas de hoy</div>
+      <ul class="marcas" id="lst-marcas"></ul>
+    </div>
+
+    <div class="card" style="margin-top:14px;" id="card-aus">
+      <div class="aus-cab">
+        <div class="etq">📅 Ausencias y permisos</div>
+        <button type="button" id="aus-abrir">+ Solicitar</button>
+      </div>
+      <div class="aus-form" id="aus-form" style="display:none;">
+        <label for="aus-tipo">Tipo</label>
+        <select id="aus-tipo"></select>
+        <div class="aus-nota" id="aus-nota-igss" style="display:none;">Si es por enfermedad, no escribas el diagnóstico; solo entrega la constancia a la base.</div>
+        <div class="aus-dos">
+          <div><label for="aus-desde">Desde</label><input id="aus-desde" type="date"></div>
+          <div><label for="aus-hasta">Hasta</label><input id="aus-hasta" type="date"></div>
+        </div>
+        <div class="aus-nota" id="aus-dias"></div>
+        <label for="aus-com">Comentario (opcional)</label>
+        <textarea id="aus-com" maxlength="300" placeholder="Ej. trámite personal, viaje familiar…"></textarea>
+        <button class="btn" id="aus-enviar" type="button">ENVIAR SOLICITUD</button>
+        <p class="ayuda" id="aus-ayuda">La base de mandos la revisa y la aprueba.</p>
+      </div>
+      <div id="aus-wa"></div>
+      <div id="aus-lista"><p class="vacio" style="margin-top:8px;">Sin ausencias registradas.</p></div>
+    </div>
+    </div>
+
+    <div class="tab" id="tab-ot">
+      <div class="cola" id="box-cola"><span id="txt-cola"></span><button id="btn-cola">Enviar ahora</button></div>
+
+      <div class="abiertas" id="box-abiertas" style="display:none;">
+        <h2>📂 OT abiertas <span id="n-abiertas">0</span></h2>
+        <div id="lst-abiertas"></div>
+      </div>
+
+      <div class="card" id="card-ot">
+        <h2>Reporte de trabajo</h2>
+        <div class="continuando" id="box-cont" style="display:none;"></div>
+        <label for="ot-sitio">Lugar</label>
+        <select id="ot-sitio"></select>
+
+        <label for="ot-equipo">Equipo</label>
+        <select id="ot-equipo"></select>
+
+        <div id="ot-otro-wrap" style="display:none;">
+          <label for="ot-otro">Nombre del equipo</label>
+          <input id="ot-otro" type="text" maxlength="120" placeholder="Escribe el equipo que no está en la lista">
+        </div>
+
+        <label for="ot-ident">¿Cuál equipo? <span class="opcional">(opcional)</span></label>
+        <input id="ot-ident" type="text" maxlength="120" placeholder="Ej. Extractor 3, galera 2">
+
+        <label for="ot-tipo">Tipo de trabajo</label>
+        <select id="ot-tipo"></select>
+
+        <label for="ot-fecha">Fecha</label>
+        <input id="ot-fecha" type="date">
+
+        <div class="fila2">
+          <div>
+            <label for="ot-ini">Hora de inicio</label>
+            <div class="hora-wrap"><input id="ot-ini" type="time"><button class="ahora" data-para="ot-ini" type="button">AHORA</button></div>
+          </div>
+          <div>
+            <label for="ot-fin">Hora de fin</label>
+            <div class="hora-wrap"><input id="ot-fin" type="time"><button class="ahora" data-para="ot-fin" type="button">AHORA</button></div>
+          </div>
+        </div>
+        <div class="duracion" id="ot-dur"></div>
+
+        <label for="ot-desc">¿Qué se hizo?</label>
+        <textarea id="ot-desc" maxlength="2000" placeholder="Describe la falla encontrada y el trabajo realizado"></textarea>
+
+        <label>Resultado</label>
+        <div class="seg">
+          <label><input type="radio" name="ot-res" value="1" checked><span>✔ Resuelto</span></label>
+          <label><input type="radio" name="ot-res" value="0" class="pend"><span>Queda pendiente</span></label>
+        </div>
+
+        <label>¿Quién te ayudó? <span class="opcional">(opcional)</span></label>
+        <div class="chips" id="ot-ayud"></div>
+      </div>
+
+      <button class="btn" id="btn-ot">GUARDAR REPORTE</button>
+      <p class="ayuda" id="ayuda-ot"></p>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="etq" style="margin-bottom:6px;">Mis reportes de hoy</div>
+        <ul class="ots" id="lst-ots"></ul>
+      </div>
+    </div>
+
+    <div class="tab" id="tab-lec">
+      <div class="cola" id="box-lcola"><span id="txt-lcola"></span><button id="btn-lcola">Enviar ahora</button></div>
+
+      <div class="card">
+        <h2>Lectura de inversores</h2>
+        <label for="lec-sitio">Lugar</label>
+        <select id="lec-sitio"></select>
+        <label for="lec-fecha">Fecha de la lectura</label>
+        <input id="lec-fecha" type="date">
+        <button class="btn-res" id="btn-res" type="button">📊 Resumen del lugar para el cliente</button>
+        <div class="lec-aviso" id="lec-aviso"></div>
+
+        <div id="lec-lista"></div>
+
+        <div class="lec-total" id="lec-total" style="display:none;">
+          <div><div class="etq">Total del día</div><span id="lec-cuenta"></span></div>
+          <b id="lec-suma">0 kWh</b>
+        </div>
+      </div>
+
+
+      <div class="card" id="card-res" style="display:none; margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h2 id="res-titulo" style="margin:0;">Resumen</h2>
+          <button id="res-cerrar" type="button" style="border:0;background:none;font-size:22px;color:var(--suave);">✕</button>
+        </div>
+        <div class="res-chips" id="res-chips">
+          <button data-r="7" type="button">Últimos 7 días</button>
+          <button data-r="mes" type="button">Este mes</button>
+          <button data-r="mesAnt" type="button">Mes anterior</button>
+        </div>
+        <div id="res-cuerpo"></div>
+      </div>
+      <button class="btn" id="btn-lec">GUARDAR LECTURAS</button>
+      <p class="ayuda" id="ayuda-lec"></p>
+    </div>
+  </section>
+
+  <!-- Error de configuración -->
+  <section id="v-error" class="vista">
+    <div class="card centro">
+      <h2>No se pudo conectar</h2>
+      <p class="txt" id="err-texto"></p>
+    </div>
+    <button class="btn sec" onclick="location.reload()">Reintentar</button>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <img src="img/rex-dino.png" alt="">
+  <span>Desarrollado por REX Services</span>
+</footer>
+
+<script>
+  // ================== CONFIGURACIÓN ==================
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzfHKz4TKGwtL7N1c0VhZTzqXvWKnAyVpz60nkcEpuj2im0VarUhn-JTNq03Ho7dAbBsA/exec';
+  // ===================================================
+
+  const $ = id => document.getElementById(id);
+  const estado = { tecnico: null, sitios: [], precisionMax: 100, abierta: null, pos: null, ocupado: false, watchId: null };
+
+  // ---------- Identificador del celular ----------
+  function deviceId() {
+    let id = localStorage.getItem('jawem_device');
+    if (!id) {
+      id = (crypto.randomUUID ? crypto.randomUUID() :
+            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+              const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            }));
+      localStorage.setItem('jawem_device', id);
+    }
+    return id;
+  }
+
+  // ---------- Comunicación con Apps Script ----------
+  async function api(datos) {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ deviceId: deviceId() }, datos))
+    });
+    return r.json();
+  }
+
+  async function apiGet(accion) {
+    const r = await fetch(API_URL + '?accion=' + encodeURIComponent(accion));
+    return r.json();
+  }
+
+  // ---------- Utilidades de interfaz ----------
+  function mostrar(vista) {
+    document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
+    $('v-' + vista).classList.add('activa');
+  }
+
+  let toastTimer;
+  function toast(msg, error) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast ver' + (error ? ' error' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.className = 'toast', error ? 6000 : 4000);
+  }
+
+  function distancia(lat1, lng1, lat2, lng2) {
+    const R = 6371000, rad = x => x * Math.PI / 180;
+    const dLat = rad(lat2 - lat1), dLng = rad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  function fmtDist(m) {
+    return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : Math.round(m) + ' m';
+  }
+
+  // ---------- Reloj ----------
+  function tickReloj() {
+    const ahora = new Date();
+    $('lbl-reloj').textContent = ahora.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const f = ahora.toLocaleDateString('es-GT', { weekday: 'long', day: 'numeric', month: 'long' });
+    $('lbl-fecha').textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }
+
+  // ---------- Inicio ----------
+  async function iniciar() {
+    if (API_URL.startsWith('PEGA_AQUI')) {
+      $('err-texto').textContent = 'Falta configurar la dirección del sistema (API_URL).';
+      return mostrar('error');
+    }
+    mostrar('cargando');
+    $('txt-cargando').textContent = 'Conectando…';
+    try {
+      const r = await api({ accion: 'estado' });
+      if (r.ok) {
+        try { localStorage.setItem('jawem_estado', JSON.stringify({ tecnico: r.tecnico, sitios: r.sitios, precisionMax: r.precisionMax })); } catch (_) {}
+        estado.offline = false;
+        return abrirPrincipal(r);
+      }
+      if (r.codigo === 'NO_REGISTRADO') return abrirActivacion();
+      if (r.codigo === 'PENDIENTE' || r.codigo === 'REVOCADO') return abrirPendiente(r.codigo);
+      $('err-texto').textContent = r.error || 'Error desconocido.';
+      mostrar('error');
+    } catch (e) {
+      // Sin señal: si el celular ya estaba activado, abrir en modo sin conexión
+      let cache = null;
+      try { cache = JSON.parse(localStorage.getItem('jawem_estado') || 'null'); } catch (_) {}
+      if (cache && cache.tecnico) {
+        estado.offline = true;
+        return abrirPrincipal(Object.assign({ marcas: [], abierta: null }, cache));
+      }
+      $('err-texto').textContent = 'Revisa tu conexión a internet e intenta de nuevo.';
+      mostrar('error');
+    }
+  }
+
+  // ---------- Activación ----------
+  async function abrirActivacion() {
+    mostrar('cargando');
+    $('txt-cargando').textContent = 'Cargando técnicos…';
+    const r = await apiGet('tecnicos');
+    const sel = $('sel-tecnico');
+    sel.innerHTML = '<option value="">— Elige tu nombre —</option>' +
+      (r.tecnicos || []).map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+    $('inp-pin').value = '';
+    $('ayuda-activar').textContent = '';
+    mostrar('activar');
+  }
+
+  $('btn-activar').addEventListener('click', async () => {
+    const tecnicoId = $('sel-tecnico').value;
+    const pin = $('inp-pin').value.trim();
+    if (!tecnicoId) return $('ayuda-activar').textContent = 'Elige tu nombre.';
+    if (pin.length !== 4) return $('ayuda-activar').textContent = 'El PIN tiene 4 dígitos.';
+    const b = $('btn-activar');
+    b.disabled = true; b.textContent = 'ACTIVANDO…';
+    try {
+      const r = await api({ accion: 'activar', tecnicoId, pin, navegador: navigator.userAgent });
+      if (!r.ok) { $('ayuda-activar').textContent = r.error; return; }
+      if (r.estado === 'APROBADO') { toast('Celular activado.'); return iniciar(); }
+      abrirPendiente(r.estado);
+    } catch (e) {
+      $('ayuda-activar').textContent = 'Sin conexión. Intenta de nuevo.';
+    } finally {
+      b.disabled = false; b.textContent = 'ACTIVAR';
+    }
+  });
+
+  // ---------- Pendiente ----------
+  function abrirPendiente(codigo) {
+    $('pend-codigo').textContent = deviceId().slice(0, 8).toUpperCase();
+    if (codigo === 'REVOCADO') {
+      $('pend-titulo').textContent = 'Celular dado de baja';
+      $('pend-texto').textContent = 'Este celular ya no está autorizado para marcar. Comunícate con la base de mandos.';
+    } else {
+      $('pend-titulo').textContent = 'Celular pendiente de aprobación';
+      $('pend-texto').textContent = 'Este celular quedó registrado. La base de mandos debe aprobarlo antes de que puedas marcar.';
+    }
+    mostrar('pendiente');
+  }
+  $('btn-reintentar').addEventListener('click', iniciar);
+  $('lnk-reactivar').addEventListener('click', e => { e.preventDefault(); abrirActivacion(); });
+
+  // ---------- Principal ----------
+  function abrirPrincipal(r) {
+    estado.tecnico = r.tecnico;
+    estado.sitios = r.sitios || [];
+    estado.precisionMax = r.precisionMax || 100;
+    estado.abierta = r.abierta;
+
+    $('lbl-nombre').textContent = r.tecnico.nombre;
+    $('box-offline').style.display = estado.offline ? 'block' : 'none';
+    pintarMarcas(r.marcas || []);
+    cargarDatosOT();
+    enviarCola();
+    cargarDatosLec();
+    enviarColaLec();
+    cargarAusencias();
+    mostrar('principal');
+    prepararGPS();
+    actualizarUI();
+  }
+
+  function pintarMarcas(marcas) {
+    const ul = $('lst-marcas');
+    if (!marcas.length) { ul.innerHTML = '<li class="vacio">Aún no hay marcas hoy.</li>'; return; }
+    ul.innerHTML = marcas.slice().reverse().map(m =>
+      `<li><span><span class="tag ${m.tipo}">${m.tipo}</span>${m.sitio}</span><b>${m.hora}</b></li>`
+    ).join('');
+  }
+
+  // ---------- Ubicación (GPS) ----------
+  const esIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const esChromeIOS = esIOS && /CriOS/i.test(navigator.userAgent);
+  const esApp = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+  async function prepararGPS() {
+    if (!('geolocation' in navigator)) {
+      $('pt-gps').className = 'punto mal';
+      $('lbl-gps').textContent = 'Este celular no tiene GPS disponible';
+      return;
+    }
+    // Si el permiso ya fue concedido, arrancar directo
+    let permiso = 'prompt';
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        permiso = (await navigator.permissions.query({ name: 'geolocation' })).state;
+      }
+    } catch (_) {}
+
+    if (permiso === 'granted') return iniciarGPS();
+    if (permiso === 'denied') return mostrarPermisoDenegado();
+
+    // En iPhone la ubicación se pide con un toque del usuario
+    if (esIOS) {
+      $('pt-gps').className = 'punto';
+      $('lbl-gps').textContent = 'Ubicación desactivada';
+      $('btn-gps').style.display = 'block';
+      $('ayuda-marcar').textContent = 'Toca "Activar ubicación" y luego "Permitir".';
+    } else {
+      iniciarGPS();
+    }
+  }
+
+  $('btn-gps').addEventListener('click', () => {
+    $('btn-gps').textContent = 'ACTIVANDO…';
+    // getCurrentPosition dentro del toque: así iOS muestra la pregunta de permiso
+    navigator.geolocation.getCurrentPosition(
+      p => { estado.pos = p.coords; $('btn-gps').style.display = 'none'; $('box-pasos').style.display = 'none'; iniciarGPS(); actualizarUI(); },
+      err => { $('btn-gps').textContent = '📍 ACTIVAR UBICACIÓN'; manejarErrorGPS(err); },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 }
+    );
+  });
+
+  function iniciarGPS() {
+    if (estado.watchId !== null) return;
+    $('lbl-gps').textContent = 'Buscando señal GPS…';
+    estado.watchId = navigator.geolocation.watchPosition(
+      p => {
+        estado.pos = p.coords;
+        $('btn-gps').style.display = 'none';
+        $('box-pasos').style.display = 'none';
+        actualizarUI();
+      },
+      manejarErrorGPS,
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 }
+    );
+  }
+
+  function detenerGPS() {
+    if (estado.watchId !== null) navigator.geolocation.clearWatch(estado.watchId);
+    estado.watchId = null;
+  }
+
+  function manejarErrorGPS(err) {
+    if (err.code === 1) { detenerGPS(); return mostrarPermisoDenegado(); }
+    // Tiempo agotado o señal no disponible: seguir intentando
+    $('pt-gps').className = 'punto warn';
+    $('lbl-gps').textContent = 'Buscando señal GPS…';
+    $('ayuda-marcar').textContent = 'Sal a un lugar abierto y espera unos segundos.';
+  }
+
+  function mostrarPermisoDenegado() {
+    $('pt-gps').className = 'punto mal';
+    $('lbl-gps').textContent = 'Permiso de ubicación bloqueado';
+    $('btn-marcar').disabled = true;
+    $('ayuda-marcar').textContent = '';
+
+    let pasos;
+    if (esIOS) {
+      const nav = esChromeIOS ? 'Chrome' : 'Sitios web de Safari';
+      pasos = `
+        <b class="t">Activa la ubicación en tu iPhone:</b>
+        <ol>
+          <li>Abre <b>Configuración</b> → <b>Privacidad y seguridad</b> → <b>Localización</b> y verifica que esté <b>activada</b>.</li>
+          <li>En esa misma lista entra a <b>${nav}</b>, elige <b>Al usar la app</b> y activa <b>Ubicación exacta</b>.</li>
+          ${esChromeIOS ? '' : '<li>Abre <b>Configuración</b> → <b>Apps</b> → <b>Safari</b> → <b>Ubicación</b> y elige <b>Preguntar</b> o <b>Permitir</b>.</li>'}
+          <li>Regresa aquí y toca <b>Reintentar</b>. Si pregunta, elige <b>Permitir</b>.</li>
+        </ol>`;
+    } else {
+      pasos = `
+        <b class="t">Activa la ubicación en tu celular:</b>
+        <ol>
+          <li>Baja la barra de notificaciones y activa <b>Ubicación</b>.</li>
+          <li>En el navegador toca el ícono junto a la dirección (🔒 o ⓘ) → <b>Permisos</b> → <b>Ubicación</b> → <b>Permitir</b>.</li>
+          <li>Toca <b>Reintentar</b>.</li>
+        </ol>`;
+    }
+    $('box-pasos').innerHTML = pasos + '<button class="btn sec" style="margin-top:10px;" onclick="location.reload()">REINTENTAR</button>';
+    $('box-pasos').style.display = 'block';
+    $('btn-gps').style.display = 'none';
+  }
+
+  function actualizarUI() {
+    const btn = $('btn-marcar');
+    const esSalida = !!estado.abierta;
+    btn.textContent = esSalida ? 'MARCAR SALIDA' : 'MARCAR LLEGADA';
+    btn.classList.toggle('salida', esSalida);
+
+    const p = estado.pos;
+    if (!p) {
+      btn.disabled = true;
+      $('lbl-sitio').textContent = esSalida ? estado.abierta.sitio : '—';
+      return;
+    }
+
+    const prec = Math.round(p.accuracy);
+    const buena = prec <= estado.precisionMax;
+    $('pt-gps').className = 'punto ' + (buena ? 'ok' : 'warn');
+    $('lbl-gps').textContent = 'GPS ' + (buena ? 'listo' : 'impreciso') + ' · ±' + prec + ' m';
+
+    let sitio = null, dist = Infinity;
+    if (esSalida) {
+      sitio = estado.sitios.find(s => s.id === estado.abierta.sitioId) || null;
+      if (sitio) dist = distancia(p.latitude, p.longitude, sitio.lat, sitio.lng);
+    } else {
+      estado.sitios.forEach(s => {
+        const d = distancia(p.latitude, p.longitude, s.lat, s.lng);
+        if (d < dist) { dist = d; sitio = s; }
+      });
+    }
+
+    if (!sitio) {
+      $('lbl-sitio').textContent = 'Sin sitios configurados';
+      $('lbl-distancia').textContent = '';
+      btn.disabled = true;
+      return;
+    }
+
+    const dentro = dist <= sitio.radio;
+    $('lbl-sitio').textContent = (dentro ? '📍 ' : '') + sitio.nombre;
+    $('lbl-distancia').textContent = dentro
+      ? 'Estás dentro del sitio (' + fmtDist(dist) + ')'
+      : 'Estás a ' + fmtDist(dist) + ' · debes estar a menos de ' + sitio.radio + ' m';
+
+    btn.disabled = estado.ocupado || !buena;
+    $('ayuda-marcar').textContent = !buena
+      ? 'Esperando mejor señal GPS…'
+      : (!dentro ? 'Fuera del sitio: si marcas, quedará registrado como fuera de rango.' : '');
+  }
+
+  $('btn-marcar').addEventListener('click', async () => {
+    const p = estado.pos;
+    if (!p || estado.ocupado) return;
+    estado.ocupado = true;
+    const btn = $('btn-marcar');
+    btn.disabled = true;
+    btn.textContent = 'REGISTRANDO…';
+    try {
+      const r = await api({
+        accion: 'marcar',
+        tipo: estado.abierta ? 'SALIDA' : 'LLEGADA',
+        lat: p.latitude,
+        lng: p.longitude,
+        precision: p.accuracy
+      });
+      if (r.ok) {
+        toast('✔ ' + r.mensaje + (r.observacion ? ' ' + r.observacion : ''));
+        if (navigator.vibrate) navigator.vibrate(120);
+      } else {
+        toast(r.error || 'No se pudo registrar.', true);
+      }
+      const e = await api({ accion: 'estado' });
+      if (e.ok) {
+        estado.abierta = e.abierta;
+        estado.sitios = e.sitios || estado.sitios;
+        pintarMarcas(e.marcas || []);
+      }
+    } catch (err) {
+      toast('Sin conexión. La marca NO se registró, intenta de nuevo.', true);
+    } finally {
+      estado.ocupado = false;
+      actualizarUI();
+    }
+  });
+
+  // Al volver a la app, refrescar estado
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && estado.tecnico) {
+      try {
+        const e = await api({ accion: 'estado' });
+        if (e.ok) { estado.abierta = e.abierta; estado.sitios = e.sitios || estado.sitios; pintarMarcas(e.marcas || []); actualizarUI(); }
+      } catch (_) {}
+    }
+  });
+
+
+  // =====================================================
+  //  REPORTES DE TRABAJO
+  // =====================================================
+  const ot = { datos: null, enviando: false };
+  const COLA = 'jawem_ot_cola';
+  const hoyISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const horaAhora = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  const escH = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const nuevoRef = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2));
+
+  // Pestañas
+  function verTab(cual) {
+    ['asis', 'ot', 'lec'].forEach(t => {
+      $('tb-' + t).classList.toggle('activa', cual === t);
+      $('tab-' + t).classList.toggle('activa', cual === t);
+    });
+    if (cual === 'ot') preseleccionarSitio();
+    if (cual === 'lec') abrirLecturas();
+  }
+  $('tb-asis').addEventListener('click', () => verTab('asis'));
+  $('tb-ot').addEventListener('click', () => verTab('ot'));
+  $('tb-lec').addEventListener('click', () => verTab('lec'));
+
+  // Datos del formulario (con copia en el celular para usar sin señal)
+  async function cargarDatosOT() {
+    let d = null;
+    if (!estado.offline) {
+      try {
+        const r = await api({ accion: 'ot_datos' });
+        if (r.ok) { d = r; try { localStorage.setItem('jawem_ot_datos', JSON.stringify(r)); } catch (_) {} }
+      } catch (_) {}
+    }
+    if (!d) { try { d = JSON.parse(localStorage.getItem('jawem_ot_datos') || 'null'); } catch (_) {} }
+    if (!d) { $('ayuda-ot').textContent = 'Conéctate a internet una vez para cargar la lista de lugares y equipos.'; return; }
+    ot.datos = d;
+    pintarFormularioOT();
+    pintarMisOT(d.mias || []);
+    pintarAbiertas(d.abiertas || []);
+  }
+
+  function pintarFormularioOT() {
+    const d = ot.datos;
+    // Lugares agrupados por cliente
+    const porCliente = {};
+    d.sitios.forEach(s => (porCliente[s.cliente] = porCliente[s.cliente] || []).push(s));
+    $('ot-sitio').innerHTML = '<option value="">— Elige el lugar —</option>' +
+      Object.keys(porCliente).sort((a, b) => (a === 'JAWEM') - (b === 'JAWEM') || a.localeCompare(b)).map(c =>
+        `<optgroup label="${escH(c)}">` + porCliente[c].map(s => `<option value="${s.id}">${escH(s.nombre)}</option>`).join('') + '</optgroup>'
+      ).join('');
+    // Equipos agrupados por categoría
+    const porCat = {};
+    d.equipos.forEach(e => (porCat[e.categoria] = porCat[e.categoria] || []).push(e));
+    $('ot-equipo').innerHTML = '<option value="">— Elige el equipo —</option>' +
+      Object.keys(porCat).map(c =>
+        `<optgroup label="${escH(c)}">` + porCat[c].map(e => `<option value="${e.id}">${escH(e.nombre)}</option>`).join('') + '</optgroup>'
+      ).join('') +
+      '<optgroup label="Otro"><option value="OTRO">➕ Otro (no está en la lista)</option></optgroup>';
+    $('ot-tipo').innerHTML = (d.tipos || ['Correctivo', 'Preventivo', 'Inspección', 'Instalación', 'Otro'])
+      .map(t => `<option>${t}</option>`).join('');
+    $('ot-ayud').innerHTML = (d.personas || []).map(p =>
+      `<label><input type="checkbox" value="${p.id}"><span>${escH(p.nombre.split(' ').slice(0, 2).join(' '))}</span></label>`
+    ).join('') || '<span class="opcional">Sin personas registradas.</span>';
+    if (!$('ot-fecha').value) $('ot-fecha').value = hoyISO();
+    $('ot-fecha').max = hoyISO();
+    preseleccionarSitio();
+  }
+
+  // Sugiere el lugar: donde marcó llegada, el más cercano por GPS o el último usado
+  function preseleccionarSitio() {
+    if (!ot.datos || $('ot-sitio').value) return;
+    let id = estado.abierta ? estado.abierta.sitioId : '';
+    if (!id && estado.pos) {
+      let mejor = null, dmin = 2000;
+      ot.datos.sitios.forEach(s => {
+        if (s.lat === null) return;
+        const dd = distancia(estado.pos.latitude, estado.pos.longitude, s.lat, s.lng);
+        if (dd < dmin) { dmin = dd; mejor = s; }
+      });
+      if (mejor) id = mejor.id;
+    }
+    if (!id) id = localStorage.getItem('jawem_ot_ultimo_sitio') || '';
+    if (id && ot.datos.sitios.some(s => s.id === id)) $('ot-sitio').value = id;
+  }
+
+  // Equipo "Otro": mostrar campo para escribirlo
+  $('ot-equipo').addEventListener('change', () => {
+    const otro = $('ot-equipo').value === 'OTRO';
+    $('ot-otro-wrap').style.display = otro ? 'block' : 'none';
+    if (otro) setTimeout(() => $('ot-otro').focus(), 50);
+  });
+
+  // Botones "AHORA" y duración
+  document.querySelectorAll('.ahora').forEach(b => b.addEventListener('click', () => { $(b.dataset.para).value = horaAhora(); calcDuracion(); }));
+  ['ot-ini', 'ot-fin'].forEach(id => $(id).addEventListener('input', calcDuracion));
+  function minutos(h) { if (!h) return null; const [a, b] = h.split(':').map(Number); return a * 60 + b; }
+  function calcDuracion() {
+    const i = minutos($('ot-ini').value), f = minutos($('ot-fin').value);
+    if (i === null || f === null) { $('ot-dur').textContent = ''; return null; }
+    let d = f - i; if (d < 0) d += 1440;
+    $('ot-dur').textContent = d ? 'Duración: ' + (d >= 60 ? Math.floor(d / 60) + ' h ' : '') + (d % 60) + ' min' : '';
+    return d;
+  }
+
+  // Guardar
+  $('btn-ot').addEventListener('click', async () => {
+    const aviso = t => { $('ayuda-ot').textContent = t; $('ayuda-ot').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+    const reporte = {
+      ref: nuevoRef(),
+      sitioId: $('ot-sitio').value,
+      equipoId: $('ot-equipo').value,
+      equipoOtro: $('ot-equipo').value === 'OTRO' ? $('ot-otro').value.trim() : '',
+      identificacion: $('ot-ident').value.trim(),
+      tipo: $('ot-tipo').value,
+      fecha: $('ot-fecha').value,
+      inicio: $('ot-ini').value,
+      fin: $('ot-fin').value,
+      descripcion: $('ot-desc').value.trim(),
+      resuelto: document.querySelector('input[name="ot-res"]:checked').value === '1',
+      ayudantes: [...document.querySelectorAll('#ot-ayud input:checked')].map(x => x.value),
+      lat: estado.pos ? estado.pos.latitude : null,
+      lng: estado.pos ? estado.pos.longitude : null,
+      otOrigen: ot.continuando ? ot.continuando.id : ''
+    };
+    if (!reporte.sitioId) return aviso('Elige el lugar.');
+    if (!reporte.equipoId) return aviso('Elige el equipo.');
+    if (reporte.equipoId === 'OTRO' && reporte.equipoOtro.length < 3) return aviso('Escribe el nombre del equipo.');
+    if (!reporte.fecha) return aviso('Indica la fecha.');
+    if (!reporte.inicio || !reporte.fin) return aviso('Indica la hora de inicio y de fin.');
+    const dur = calcDuracion();
+    if (!dur || dur > 960) return aviso('Revisa las horas: la duración no es válida.');
+    if (reporte.descripcion.length < 5) return aviso('Describe qué se hizo.');
+    $('ayuda-ot').textContent = '';
+
+    // Datos para mostrar en la lista mientras está en cola
+    const sitio = ot.datos.sitios.find(s => s.id === reporte.sitioId);
+    const eq = ot.datos.equipos.find(e => e.id === reporte.equipoId);
+    reporte._vista = { sitio: sitio ? sitio.nombre : '', equipo: eq ? eq.nombre : reporte.equipoOtro };
+    try { localStorage.setItem('jawem_ot_ultimo_sitio', reporte.sitioId); } catch (_) {}
+
+    const b = $('btn-ot');
+    b.disabled = true; b.textContent = 'GUARDANDO…';
+    try {
+      const r = await enviarReporte(reporte, false);
+      if (r.ok) {
+        toast(r.origen ? (r.cerrada ? '✔ ' + r.origen + ' cerrada (' + r.id + ').' : '✔ Avance guardado en ' + r.origen + ' (' + r.id + '). Sigue abierta.')
+                       : '✔ Reporte ' + r.id + ' guardado.');
+        limpiarFormulario();
+        cancelarContinuar();
+        cargarDatosOT();
+      } else {
+        aviso(r.error || 'No se pudo guardar.');
+      }
+    } catch (e) {
+      // Sin señal: guardar en el celular
+      const cola = leerCola(); cola.push(reporte); guardarCola(cola);
+      toast('📵 Sin señal: el reporte quedó guardado en el celular y se enviará solo.');
+      limpiarFormulario();
+      cancelarContinuar();
+      pintarMisOT(ot.datos.mias || []);
+    } finally {
+      b.disabled = false; b.textContent = 'GUARDAR REPORTE';
+    }
+  });
+
+  async function enviarReporte(reporte, diferido) {
+    const envio = Object.assign({}, reporte, { diferido: diferido });
+    delete envio._vista;
+    return api({ accion: 'ot_guardar', ot: envio });
+  }
+
+  function limpiarFormulario() {
+    ['ot-ident', 'ot-ini', 'ot-fin', 'ot-desc', 'ot-otro'].forEach(id => $(id).value = '');
+    $('ot-equipo').value = '';
+    $('ot-otro-wrap').style.display = 'none';
+    document.querySelector('input[name="ot-res"][value="1"]').checked = true;
+    document.querySelectorAll('#ot-ayud input').forEach(x => x.checked = false);
+    $('ot-dur').textContent = '';
+  }
+
+  // Cola de reportes sin enviar
+  function leerCola() { try { return JSON.parse(localStorage.getItem(COLA) || '[]'); } catch (_) { return []; } }
+  function guardarCola(c) { try { localStorage.setItem(COLA, JSON.stringify(c)); } catch (_) {} pintarCola(); }
+  function pintarCola() {
+    const n = leerCola().length;
+    $('box-cola').style.display = n ? 'flex' : 'none';
+    $('txt-cola').textContent = n === 1 ? '📤 1 reporte por enviar' : '📤 ' + n + ' reportes por enviar';
+    $('badge-cola').style.display = n ? 'inline' : 'none';
+    $('badge-cola').textContent = n;
+  }
+
+  async function enviarCola() {
+    pintarCola();
+    if (ot.enviando || !leerCola().length) return;
+    ot.enviando = true;
+    let enviados = 0;
+    try {
+      while (leerCola().length) {
+        const cola = leerCola();
+        const rep = cola[0];
+        let r;
+        try { r = await enviarReporte(rep, true); } catch (e) { break; }  // sigue sin señal
+        if (r.ok || r.rechazo) {
+          cola.shift(); guardarCola(cola);
+          if (r.ok) enviados++;
+          else toast('Un reporte fue rechazado: ' + r.error, true);
+        } else break;
+      }
+    } finally {
+      ot.enviando = false;
+      pintarCola();
+      if (enviados) { toast('✔ Se enviaron ' + enviados + ' reporte(s) pendientes.'); cargarDatosOT(); }
+    }
+  }
+  $('btn-cola').addEventListener('click', enviarCola);
+  window.addEventListener('online', () => { enviarCola(); if (estado.offline) iniciar(); });
+  setInterval(enviarCola, 60000);
+
+  function pintarMisOT(mias) {
+    const cola = leerCola().map(c => ({ id: 'Por enviar', sitio: c._vista.sitio, equipo: c._vista.equipo, ident: c.identificacion,
+                                        ini: c.inicio, fin: c.fin, resultado: 'COLA' }));
+    const todas = cola.concat(mias);
+    $('lst-ots').innerHTML = todas.length ? todas.map(o => `
+      <li><div class="t"><b>${escH(o.equipo)}</b><span class="res ${o.resultado}">${o.resultado === 'COLA' ? 'POR ENVIAR' : o.resultado}</span></div>
+      <small>${escH(o.id)} · ${escH(o.sitio)}${o.ident ? ' · ' + escH(o.ident) : ''} · ${o.ini}–${o.fin}</small></li>`).join('')
+      : '<li class="vacio" style="color:var(--suave)">Aún no hay reportes hoy.</li>';
+  }
+
+  // =====================================================
+  //  LECTURAS DE INVERSORES
+  // =====================================================
+  const lec = { datos: null, promedios: {}, enviando: false, consultaId: 0 };
+  const LCOLA = 'jawem_lec_cola';
+  const fmtKwh = n => Number(n || 0).toLocaleString('es-GT', { maximumFractionDigits: 1 }) + ' kWh';
+
+  async function cargarDatosLec() {
+    let d = null;
+    if (!estado.offline) {
+      try {
+        const r = await api({ accion: 'lec_datos' });
+        if (r.ok) { d = r; try { localStorage.setItem('jawem_lec_datos', JSON.stringify(r)); } catch (_) {} }
+      } catch (_) {}
+    }
+    if (!d) { try { d = JSON.parse(localStorage.getItem('jawem_lec_datos') || 'null'); } catch (_) {} }
+    if (!d) return;
+    lec.datos = d;
+    $('lec-sitio').innerHTML = '<option value="">— Elige el lugar —</option>' +
+      d.sitios.map(s => `<option value="${s.id}">${escH(s.nombre)} (${s.inversores.length})</option>`).join('');
+    const ult = localStorage.getItem('jawem_lec_ultimo_sitio');
+    if (ult && d.sitios.some(s => s.id === ult)) $('lec-sitio').value = ult;
+    if (!$('lec-fecha').value) $('lec-fecha').value = hoyISO();
+    $('lec-fecha').max = hoyISO();
+    const min = new Date(); min.setDate(min.getDate() - 45);
+    $('lec-fecha').min = min.toISOString().slice(0, 10);
+  }
+
+  function abrirLecturas() {
+    if (!lec.datos) { $('ayuda-lec').textContent = 'Conéctate a internet una vez para cargar la lista de inversores.'; return; }
+    if ($('lec-sitio').value) pintarInversores();
+  }
+
+  $('lec-sitio').addEventListener('change', () => {
+    try { localStorage.setItem('jawem_lec_ultimo_sitio', $('lec-sitio').value); } catch (_) {}
+    pintarInversores();
+  });
+  $('lec-fecha').addEventListener('change', pintarInversores);
+
+  async function pintarInversores() {
+    const sitio = lec.datos && lec.datos.sitios.find(s => s.id === $('lec-sitio').value);
+    $('ayuda-lec').textContent = '';
+    if (!sitio) { $('lec-lista').innerHTML = ''; $('lec-total').style.display = 'none'; $('lec-aviso').className = 'lec-aviso'; return; }
+
+    const motivos = (lec.datos.motivos || ['Otro']).map(m => `<option>${escH(m)}</option>`).join('');
+    let html = '', areaAnt = null;
+    sitio.inversores.forEach(i => {
+      if (i.area !== areaAnt) { if (i.area) html += `<div class="lec-area">${escH(i.area)}</div>`; areaAnt = i.area; }
+      html += `
+        <div class="lec-fila" data-id="${i.id}">
+          <div class="lec-n">#${i.numero}</div>
+          <div>
+            <input type="number" inputmode="decimal" step="0.1" min="0" placeholder="kWh" class="lec-kwh">
+            <div class="prom"></div>
+          </div>
+          <label class="lec-nl"><input type="checkbox" class="lec-chk">No leído</label>
+          <div class="lec-motivo"><select class="lec-mot">${motivos}</select></div>
+        </div>`;
+    });
+    $('lec-lista').innerHTML = html;
+    $('lec-total').style.display = 'flex';
+    document.querySelectorAll('#lec-lista .lec-kwh').forEach(x => x.addEventListener('input', recalcularLec));
+    document.querySelectorAll('#lec-lista .lec-chk').forEach(x => x.addEventListener('change', e => {
+      e.target.closest('.lec-fila').classList.toggle('nl', e.target.checked);
+      recalcularLec();
+    }));
+    recalcularLec();
+
+    // ¿Ya hay lecturas de esa fecha?
+    const aviso = $('lec-aviso');
+    lec.promedios = {};
+    if (estado.offline) {
+      aviso.className = 'lec-aviso sin';
+      aviso.textContent = '📵 Sin señal: no se puede revisar si esta fecha ya tiene lecturas. Si ya existían, se actualizarán al enviar.';
+      return;
+    }
+    aviso.className = 'lec-aviso nueva';
+    aviso.textContent = 'Revisando si ya hay lecturas de esta fecha…';
+    const miConsulta = ++lec.consultaId;
+    try {
+      const r = await api({ accion: 'lec_consulta', sitioId: sitio.id, fecha: $('lec-fecha').value });
+      if (miConsulta !== lec.consultaId) return;   // el usuario cambió de lugar o fecha
+      if (!r.ok) { aviso.className = 'lec-aviso sin'; aviso.textContent = r.error || 'No se pudo revisar.'; return; }
+      lec.promedios = r.promedios || {};
+      if (r.yaRegistrada) {
+        aviso.className = 'lec-aviso ya';
+        aviso.innerHTML = `✔ <b>Esta fecha ya tiene lecturas</b>${r.registradoPor ? ' (registró ' + escH(r.registradoPor) + (r.registradoEl ? ', ' + r.registradoEl : '') + ')' : ''}. Abajo están los valores; si corriges alguno y guardas, se actualiza.`;
+        document.querySelectorAll('#lec-lista .lec-fila').forEach(f => {
+          const e = r.existentes[f.dataset.id];
+          if (!e) return;
+          if (e.estado === 'NO_LEIDO') {
+            f.querySelector('.lec-chk').checked = true; f.classList.add('nl');
+            if (e.motivo) f.querySelector('.lec-mot').value = e.motivo;
+          } else if (e.kwh !== null) {
+            f.querySelector('.lec-kwh').value = e.kwh;
+          }
+        });
+        $('btn-lec').textContent = 'ACTUALIZAR LECTURAS';
+      } else {
+        aviso.className = 'lec-aviso nueva';
+        aviso.textContent = 'Nueva lectura: esta fecha aún no tiene registros para este lugar.';
+        $('btn-lec').textContent = 'GUARDAR LECTURAS';
+      }
+      recalcularLec();
+    } catch (e) {
+      if (miConsulta !== lec.consultaId) return;
+      aviso.className = 'lec-aviso sin';
+      aviso.textContent = '📵 Sin señal: no se puede revisar si esta fecha ya tiene lecturas. Si ya existían, se actualizarán al enviar.';
+    }
+  }
+
+  function recalcularLec() {
+    let suma = 0, leidos = 0, total = 0;
+    document.querySelectorAll('#lec-lista .lec-fila').forEach(f => {
+      total++;
+      const nl = f.querySelector('.lec-chk').checked;
+      const v = parseFloat(f.querySelector('.lec-kwh').value);
+      const prom = lec.promedios[f.dataset.id];
+      const p = f.querySelector('.prom');
+      p.className = 'prom';
+      p.textContent = prom ? 'Promedio: ' + prom + ' kWh' : '';
+      if (!nl && isFinite(v)) {
+        suma += v; leidos++;
+        if (prom && (v > prom * 1.6 || v < prom * 0.4)) {
+          p.className = 'prom warn';
+          p.textContent = '⚠ Muy diferente al promedio (' + prom + ' kWh). Revisa el valor.';
+        }
+      }
+    });
+    $('lec-suma').textContent = fmtKwh(suma);
+    $('lec-cuenta').textContent = leidos + ' de ' + total + ' inversores leídos';
+  }
+
+  $('btn-lec').addEventListener('click', async () => {
+    const aviso = t => { $('ayuda-lec').textContent = t; };
+    const sitioId = $('lec-sitio').value, fecha = $('lec-fecha').value;
+    if (!sitioId) return aviso('Elige el lugar.');
+    if (!fecha) return aviso('Elige la fecha.');
+    const filas = [...document.querySelectorAll('#lec-lista .lec-fila')];
+    const lecturas = [];
+    let faltan = 0, raros = 0;
+    filas.forEach(f => {
+      const nl = f.querySelector('.lec-chk').checked;
+      const v = f.querySelector('.lec-kwh').value;
+      if (nl) lecturas.push({ id: f.dataset.id, noLeido: true, motivo: f.querySelector('.lec-mot').value });
+      else if (v !== '' && isFinite(parseFloat(v))) {
+        lecturas.push({ id: f.dataset.id, kwh: parseFloat(v) });
+        if (f.querySelector('.prom.warn')) raros++;
+      } else faltan++;
+    });
+    if (faltan) return aviso('Faltan ' + faltan + ' inversor(es): escribe su lectura o marca "No leído".');
+    if (raros && !confirm('Hay ' + raros + ' lectura(s) muy diferentes al promedio. ¿Están correctas?')) return;
+    aviso('');
+
+    const sitio = lec.datos.sitios.find(s => s.id === sitioId);
+    const paquete = { ref: nuevoRef(), sitioId, fecha, lecturas, _vista: sitio ? sitio.nombre : sitioId };
+    const b = $('btn-lec');
+    b.disabled = true; b.textContent = 'GUARDANDO…';
+    try {
+      const r = await enviarLecturas(paquete);
+      if (r.ok) {
+        toast('✔ Lecturas guardadas · ' + fmtKwh(r.total) + (r.actualizadas ? ' (' + r.actualizadas + ' actualizadas)' : ''));
+        pintarInversores();
+      } else aviso(r.error || 'No se pudo guardar.');
+    } catch (e) {
+      const cola = leerColaLec(); cola.push(paquete); guardarColaLec(cola);
+      toast('📵 Sin señal: las lecturas quedaron guardadas en el celular y se enviarán solas.');
+    } finally {
+      b.disabled = false;
+      b.textContent = $('lec-aviso').classList.contains('ya') ? 'ACTUALIZAR LECTURAS' : 'GUARDAR LECTURAS';
+    }
+  });
+
+  function enviarLecturas(p) {
+    const envio = Object.assign({ accion: 'lec_guardar' }, p);
+    delete envio._vista;
+    return api(envio);
+  }
+
+  function leerColaLec() { try { return JSON.parse(localStorage.getItem(LCOLA) || '[]'); } catch (_) { return []; } }
+  function guardarColaLec(c) { try { localStorage.setItem(LCOLA, JSON.stringify(c)); } catch (_) {} pintarColaLec(); }
+  function pintarColaLec() {
+    const c = leerColaLec(), n = c.length;
+    $('box-lcola').style.display = n ? 'flex' : 'none';
+    $('txt-lcola').textContent = '📤 ' + n + (n === 1 ? ' lectura por enviar' : ' lecturas por enviar') +
+      (n ? ' (' + c.map(x => x._vista + ' ' + x.fecha.slice(8) + '/' + x.fecha.slice(5, 7)).join(', ') + ')' : '');
+    $('badge-lcola').style.display = n ? 'inline' : 'none';
+    $('badge-lcola').textContent = n;
+  }
+
+  async function enviarColaLec() {
+    pintarColaLec();
+    if (lec.enviando || !leerColaLec().length) return;
+    lec.enviando = true;
+    let enviados = 0;
+    try {
+      while (leerColaLec().length) {
+        const cola = leerColaLec();
+        let r;
+        try { r = await enviarLecturas(cola[0]); } catch (e) { break; }
+        if (r.ok || r.rechazo) {
+          cola.shift(); guardarColaLec(cola);
+          if (r.ok) enviados++; else toast('Unas lecturas fueron rechazadas: ' + r.error, true);
+        } else break;
+      }
+    } finally {
+      lec.enviando = false;
+      pintarColaLec();
+      if (enviados) toast('✔ Se enviaron ' + enviados + ' lectura(s) pendientes.');
+    }
+  }
+  $('btn-lcola').addEventListener('click', enviarColaLec);
+  window.addEventListener('online', enviarColaLec);
+  setInterval(enviarColaLec, 60000);
+
+  // ---------- Resumen del lugar (para mostrar al cliente en campo) ----------
+  let resRango = '7', resUltimo = null;
+  function resFechas(r) {
+    const hoy = new Date();
+    if (r === 'mes') return [iso2(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), iso2(hoy)];
+    if (r === 'mesAnt') return [iso2(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)), iso2(new Date(hoy.getFullYear(), hoy.getMonth(), 0))];
+    const d = new Date(hoy); d.setDate(d.getDate() - 6); return [iso2(d), iso2(hoy)];
+  }
+  function iso2(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  const fDM = s => s.slice(8) + '/' + s.slice(5, 7);
+  const kwh0 = n => Number(n || 0).toLocaleString('es-GT', { maximumFractionDigits: 1 });
+
+  $('btn-res').addEventListener('click', () => {
+    if (!$('lec-sitio').value) { $('ayuda-lec').textContent = 'Primero elige el lugar.'; return; }
+    $('card-res').style.display = 'block';
+    cargarResumen();
+    setTimeout(() => $('card-res').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  });
+  $('res-cerrar').addEventListener('click', () => $('card-res').style.display = 'none');
+  document.querySelectorAll('#res-chips button').forEach(b => b.addEventListener('click', () => { resRango = b.dataset.r; cargarResumen(); }));
+  $('lec-sitio').addEventListener('change', () => { if ($('card-res').style.display === 'block') cargarResumen(); });
+
+  async function cargarResumen() {
+    document.querySelectorAll('#res-chips button').forEach(b => b.classList.toggle('activa', b.dataset.r === resRango));
+    const sitioId = $('lec-sitio').value;
+    if (!sitioId) return;
+    const [desde, hasta] = resFechas(resRango);
+    $('res-cuerpo').innerHTML = '<div class="centro" style="padding:20px 0"><div class="spinner"></div>Cargando…</div>';
+    try {
+      const r = await api({ accion: 'lec_resumen', sitioId, desde, hasta });
+      if (!r.ok) { $('res-cuerpo').innerHTML = '<p class="txt">' + escH(r.error || 'No se pudo cargar.') + '</p>'; return; }
+      resUltimo = r;
+      pintarResumen(r);
+    } catch (e) {
+      $('res-cuerpo').innerHTML = '<p class="txt">📵 Se necesita señal para ver el resumen.</p>';
+    }
+  }
+
+  function pintarResumen(r) {
+    $('res-titulo').textContent = r.sitio;
+    const W = 340, H = 120, pb = 18, pt = 6;
+    const max = Math.max(1, ...r.dias.map(x => x.kwh || 0));
+    const bw = W / Math.max(1, r.dias.length);
+    const paso = r.dias.length > 10 ? Math.ceil(r.dias.length / 10) : 1;
+    let svg = '';
+    r.dias.forEach((x, i) => {
+      if (x.kwh !== null) {
+        const h = (H - pb - pt) * x.kwh / max;
+        svg += `<rect x="${i * bw + bw * .15}" y="${H - pb - h}" width="${bw * .7}" height="${h}" rx="2" fill="#3FA9D9"/>`;
+      }
+      if (i % paso === 0) svg += `<text x="${i * bw + bw / 2}" y="${H - 4}" font-size="9" fill="#6B7588" text-anchor="middle">${x.fecha.slice(8)}</text>`;
+    });
+    const filas = r.inversores.map(i => `
+      <tr><td>${i.area ? escH(i.area) + ' · ' : ''}#${i.numero}</td>
+      <td class="n"><b>${kwh0(i.total)}</b></td><td class="n">${i.promedio === null ? '—' : kwh0(i.promedio)}</td></tr>`).join('');
+    $('res-cuerpo').innerHTML = `
+      <p class="txt" style="margin-bottom:10px;">Del ${fDM(r.desde)} al ${fDM(r.hasta)}</p>
+      <div class="res-kpis">
+        <div><span>Total generado</span><b>${kwh0(r.total)} kWh</b></div>
+        <div><span>Promedio por día</span><b>${r.promedio === null ? '—' : kwh0(r.promedio) + ' kWh'}</b></div>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%">${svg}</svg>
+      <table class="res-tabla">
+        <thead><tr><th>Inversor</th><th class="n">Total kWh</th><th class="n">Prom./día</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <p class="txt" style="font-size:12px;margin-top:6px;">Promedio = total ÷ días con lectura (${r.diasLeidos}).</p>
+      <button class="btn-wa" id="btn-wa-res" type="button">Compartir por WhatsApp</button>`;
+    $('btn-wa-res').addEventListener('click', () => {
+      const t = [
+        '☀️ *Generación solar · ' + r.sitio + '*',
+        'Del ' + fDM(r.desde) + ' al ' + fDM(r.hasta),
+        '',
+        'Total generado: *' + kwh0(r.total) + ' kWh*',
+        'Promedio por día: *' + (r.promedio === null ? '—' : kwh0(r.promedio) + ' kWh') + '*',
+        ''
+      ].concat(r.inversores.map(i => '• ' + (i.area ? i.area + ' ' : '') + '#' + i.numero + ': ' + kwh0(i.total) + ' kWh'))
+       .concat(['', '_JAWEM Consultores Energéticos S.A._']).join('\n');
+      const url = 'https://wa.me/?text=' + encodeURIComponent(t);
+      window.open(url, '_blank');
+    });
+  }
+
+  // ---------- OT abiertas: continuar y cerrar ----------
+  ot.continuando = null;
+  function pintarAbiertas(lista) {
+    const box = $('box-abiertas');
+    box.style.display = lista.length ? 'block' : 'none';
+    $('n-abiertas').textContent = lista.length;
+    $('lst-abiertas').innerHTML = lista.map((a, i) => `
+      <div class="ab-item">
+        <div class="t"><b>${escH(a.id)} · ${escH(a.sitio)}</b><span class="dias-ab">${a.dias} día${a.dias === 1 ? '' : 's'}</span></div>
+        <small>${escH(a.equipo)}${a.ident ? ' · ' + escH(a.ident) : ''} · Abrió ${escH(a.abiertaPor.split(' ')[0])}${a.visitas > 1 ? ' · ' + a.visitas + ' visitas' : ''}</small>
+        ${a.ultimaDesc ? `<div class="ult"><b>Último avance (${escH(a.ultimoTecnico.split(' ')[0])}):</b> ${escH(a.ultimaDesc)}</div>` : ''}
+        <button type="button" data-i="${i}">Continuar esta OT</button>
+      </div>`).join('');
+    document.querySelectorAll('#lst-abiertas button').forEach(b => b.addEventListener('click', () => continuarOT(lista[Number(b.dataset.i)])));
+  }
+
+  function continuarOT(a) {
+    ot.continuando = a;
+    // Llenar el formulario con los datos de la OT original
+    if ([...$('ot-sitio').options].some(o => o.value === a.sitioId)) $('ot-sitio').value = a.sitioId;
+    if (a.equipoId === 'OTRO') {
+      $('ot-equipo').value = 'OTRO'; $('ot-otro-wrap').style.display = 'block'; $('ot-otro').value = a.equipo;
+    } else if ([...$('ot-equipo').options].some(o => o.value === a.equipoId)) {
+      $('ot-equipo').value = a.equipoId; $('ot-otro-wrap').style.display = 'none';
+    }
+    $('ot-ident').value = a.ident || '';
+    if ([...$('ot-tipo').options].some(o => o.value === a.tipo)) $('ot-tipo').value = a.tipo;
+    $('ot-fecha').value = hoyISO();
+    $('box-cont').style.display = 'block';
+    $('box-cont').innerHTML = `Continuando <b>${escH(a.id)}</b> · abierta hace ${a.dias} día${a.dias === 1 ? '' : 's'}.
+      Si queda <b>Resuelto</b>, la OT se cierra. <a href="#" id="cont-cancelar">Cancelar</a>`;
+    $('cont-cancelar').onclick = e => { e.preventDefault(); cancelarContinuar(); };
+    $('ot-desc').focus();
+    $('card-ot').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function cancelarContinuar() {
+    ot.continuando = null;
+    $('box-cont').style.display = 'none';
+  }
+
+  // ================== AUSENCIAS ==================
+  const aus = { datos: null, enviando: false };
+  const fmtCorta = iso => { const [y, m, d] = iso.split('-'); return d + '/' + m + '/' + y; };
+  const hoyIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+
+  async function cargarAusencias() {
+    if (estado.offline) return;
+    try {
+      const r = await api({ accion: 'aus_datos' });
+      if (!r.ok) return;
+      aus.datos = r;
+      $('aus-tipo').innerHTML = '<option value="">Elige…</option>' + r.tipos.map(t => `<option>${escH(t)}</option>`).join('');
+      pintarAusencias(r.mias || []);
+    } catch (_) {}
+  }
+
+  function pintarAusencias(lista) {
+    const el = $('aus-lista');
+    if (!lista.length) { el.innerHTML = '<p class="vacio" style="margin-top:8px;">Sin ausencias registradas.</p>'; return; }
+    const txtEst = { APROBADA: 'Aprobada', PENDIENTE: 'Por aprobar', RECHAZADA: 'Rechazada', CANCELADA: 'Cancelada' };
+    el.innerHTML = lista.map(a => `
+      <div class="aus-item">
+        <div class="f1"><span class="tipo">${escH(a.tipo)}</span><span class="est ${a.estado}">${txtEst[a.estado] || a.estado}</span></div>
+        <div class="fechas">${a.desde === a.hasta ? fmtCorta(a.desde) : fmtCorta(a.desde) + ' al ' + fmtCorta(a.hasta)}${a.comentario ? ' · ' + escH(a.comentario) : ''}</div>
+        ${a.respuesta ? `<div class="resp">Base: ${escH(a.respuesta)}</div>` : ''}
+        ${a.estado === 'PENDIENTE' && a.id ? `<a href="#" data-cancelar="${escH(a.id)}">Cancelar solicitud</a>` : ''}
+      </div>`).join('');
+    el.querySelectorAll('[data-cancelar]').forEach(x => x.addEventListener('click', async e => {
+      e.preventDefault();
+      if (!confirm('¿Cancelar esta solicitud?')) return;
+      try {
+        const r = await api({ accion: 'aus_cancelar', id: x.dataset.cancelar });
+        if (!r.ok) return toast(r.error || 'No se pudo cancelar.', true);
+        toast('Solicitud cancelada.');
+        pintarAusencias(r.mias || []);
+      } catch (_) { toast('Sin conexión. Intenta de nuevo.', true); }
+    }));
+  }
+
+  function ausDias() {
+    const d = $('aus-desde').value, h = $('aus-hasta').value;
+    if (!d || !h) { $('aus-dias').textContent = ''; return; }
+    if (h < d) { $('aus-dias').textContent = '⚠ La fecha final es antes de la inicial.'; return; }
+    const n = Math.round((new Date(h + 'T12:00') - new Date(d + 'T12:00')) / 86400000) + 1;
+    $('aus-dias').textContent = n === 1 ? '1 día' : n + ' días (calendario)';
+  }
+
+  $('aus-abrir').addEventListener('click', () => {
+    const f = $('aus-form'), abrir = f.style.display === 'none';
+    f.style.display = abrir ? 'block' : 'none';
+    $('aus-abrir').textContent = abrir ? 'Cerrar' : '+ Solicitar';
+    $('aus-wa').innerHTML = '';
+    if (abrir) {
+      if (!aus.datos) cargarAusencias();
+      if (!$('aus-desde').value) { $('aus-desde').value = hoyIso(); $('aus-hasta').value = hoyIso(); }
+      ausDias();
+    }
+  });
+  $('aus-tipo').addEventListener('change', () => {
+    $('aus-nota-igss').style.display = $('aus-tipo').value === 'Suspensión IGSS' ? 'block' : 'none';
+  });
+  $('aus-desde').addEventListener('change', () => {
+    if (!$('aus-hasta').value || $('aus-hasta').value < $('aus-desde').value) $('aus-hasta').value = $('aus-desde').value;
+    ausDias();
+  });
+  $('aus-hasta').addEventListener('change', ausDias);
+
+  $('aus-enviar').addEventListener('click', async () => {
+    if (aus.enviando) return;
+    const tipo = $('aus-tipo').value, desde = $('aus-desde').value, hasta = $('aus-hasta').value || desde;
+    const comentario = $('aus-com').value.trim();
+    if (!tipo) return toast('Elige el tipo de ausencia.', true);
+    if (!desde) return toast('Elige la fecha.', true);
+    if (hasta < desde) return toast('La fecha final es antes de la inicial.', true);
+    if (estado.offline || !navigator.onLine) return toast('Necesitas internet para enviar la solicitud.', true);
+    aus.enviando = true;
+    $('aus-enviar').disabled = true; $('aus-enviar').textContent = 'ENVIANDO…';
+    try {
+      const r = await api({ accion: 'aus_solicitar', tipo, desde, hasta, comentario, ref: 'AUS-' + nuevoRef() });
+      if (!r.ok) { toast(r.error || 'No se pudo enviar.', true); return; }
+      toast('Solicitud enviada ✔');
+      pintarAusencias(r.mias || []);
+      $('aus-form').style.display = 'none'; $('aus-abrir').textContent = '+ Solicitar';
+      $('aus-tipo').value = ''; $('aus-com').value = ''; $('aus-nota-igss').style.display = 'none';
+      const base = aus.datos && aus.datos.base;
+      if (base) {
+        const fechas = desde === hasta ? fmtCorta(desde) : 'del ' + fmtCorta(desde) + ' al ' + fmtCorta(hasta);
+        const txt = 'Hola, soy ' + estado.tecnico.nombre + '. Solicité ' + tipo.toLowerCase() + ' ' + fechas +
+                    (comentario ? ' (' + comentario + ')' : '') + '. Quedo pendiente de la aprobación. Gracias.';
+        $('aus-wa').innerHTML = `<a class="btn-wa2" target="_blank" rel="noopener" href="https://wa.me/${base}?text=${encodeURIComponent(txt)}">Avisar a la base por WhatsApp</a>`;
+      }
+    } catch (_) {
+      toast('Sin conexión. Intenta de nuevo.', true);
+    } finally {
+      aus.enviando = false;
+      $('aus-enviar').disabled = false; $('aus-enviar').textContent = 'ENVIAR SOLICITUD';
+    }
+  });
+
+  tickReloj();
+  setInterval(tickReloj, 1000);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  iniciar();
+</script>
+</body>
+</html>
